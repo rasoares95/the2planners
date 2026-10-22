@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://the2planners.com/sitemap.xml
