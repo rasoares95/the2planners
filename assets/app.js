@@ -4,6 +4,7 @@ const COFFEE=`<a class="coffee" href="https://buymeacoffee.com/the2planners" tar
 const SOCIAL=`<a class="soc" href="https://www.instagram.com/the2planners/" target="_blank" rel="noopener" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>Instagram</span></a><a class="soc" href="https://pt.pinterest.com/the2planners/" target="_blank" rel="noopener" aria-label="Pinterest"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.64 19.31c-.09-.79-.17-2 .03-2.86l1.17-4.97s-.3-.6-.3-1.48c0-1.39.8-2.42 1.8-2.42.85 0 1.26.64 1.26 1.4 0 .85-.54 2.13-.82 3.31-.24.99.5 1.8 1.47 1.8 1.77 0 3.13-1.86 3.13-4.55 0-2.38-1.71-4.04-4.15-4.04-2.83 0-4.49 2.12-4.49 4.31 0 .85.33 1.77.74 2.27.08.1.09.18.07.28l-.28 1.12c-.04.18-.14.22-.33.13-1.24-.58-2.02-2.4-2.02-3.86 0-3.14 2.28-6.03 6.58-6.03 3.46 0 6.14 2.46 6.14 5.75 0 3.43-2.16 6.2-5.17 6.2-1.01 0-1.96-.53-2.28-1.15l-.62 2.37c-.22.86-.83 1.95-1.24 2.61A10 10 0 1 0 12 2z"/></svg><span>Pinterest</span></a>`;
 const IMG={couple:"/img/site/couple.webp",hero:"/img/site/hero.webp"};
 const PH=window.SITE.PH;
+const DIMS=window.SITE.DIMS;
 const BLOB={};
 const PATHS=!!(window.SITE&&window.SITE.paths);
 const ORIGIN="https://the2planners.com";
@@ -342,10 +343,20 @@ function about(){
 function fmtText(t){
   return esc(t).replace(/(\d{2,3}\s?º\s?C(?:\s?\|\s?\d{2,3}\s?º\s?F)?|\d{2,3} Celsius degrees(?: \| \d{2,3} Fahren\w+ degrees)?)/g,'<span class="temp">$1</span>');
 }
+function coverStyle(p){
+  const d=p.photo&&DIMS[p.photo.cover];if(!d)return"";
+  const ar=d[0]/d[1];
+  return ` style="--ar:${ar.toFixed(3)}${ar<1?`;max-width:${Math.round(ar*560)}px;margin:0 auto`:""}"`;
+}
 function figs(p,i){
   const ids=p.photo&&p.photo.pl&&p.photo.pl[i];
   if(!ids||!ids.length)return"";
-  return `<div class="inpics n${Math.min(ids.length,4)}">${ids.map(g=>`<button type="button" data-full="${src(g)}" aria-label="Open photo"><img src="${src(g)}" alt="" loading="lazy" decoding="async"></button>`).join("")}</div>`;
+  const r=g=>{const d=DIMS[g];return d?d[0]/d[1]:1.5;};
+  const one=g=>`<button type="button" data-full="${src(g)}" aria-label="Open photo" style="flex:${r(g).toFixed(3)} 1 0;aspect-ratio:${r(g).toFixed(3)}"><img src="${src(g)}" alt="" loading="lazy" decoding="async"></button>`;
+  const rows=[];let k=0;
+  if(ids.length%2===1){rows.push([ids[0]]);k=1;}
+  for(;k<ids.length;k+=2)rows.push(ids.slice(k,k+2));
+  return `<div class="inpics">${rows.map(row=>`<div class="irow${row.length===1&&r(row[0])<1?" tall":""}">${row.map(one).join("")}</div>`).join("")}</div>`;
 }
 function gallery(p){
   if(!p.photo||!p.photo.g.length)return"";
@@ -376,7 +387,7 @@ function postView(p){
   return `<div class="wrap"><a class="back" href="${back[0]}">← ${back[1]}</a>
   <div class="post"><article><div class="dateline">${esc(p.date||"")}</div><h1>${esc(titleOf(p))}</h1>${subline(p)?`<div class="dateline" style="margin-top:4px">${p.kind==="eat-out"?subline(p):esc(subline(p))}</div>`:""}
     <div class="tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
-    <div class="body"><div class="feature"><div class="stampbox">${stampInner(p,true)}</div></div>${html}${figs(p,b.length)}
+    <div class="body"><div class="feature"><div class="stampbox"${coverStyle(p)}>${stampInner(p,true)}</div></div>${html}${figs(p,b.length)}
     </div></article>
   <aside class="side">
     <div class="box"><img class="couple" src="${IMG.couple}" alt=""><p>Richie and Andrew, cooking, travelling and living together in Porto since 2016.</p><div class="socials">${SOCIAL}</div><div class="side-coffee">${COFFEE}</div></div>
