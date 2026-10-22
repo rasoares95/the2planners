@@ -21,7 +21,7 @@ for(const [key,name] of Object.entries(SECTIONS)){
     p.kind=key;p.id="p-"+slug(p.title);p.tags=p.tags||[];p.photo=PH[p.title]||null;
     p.short=key==="recipes"?p.title.replace(/\s*-?\s*Recipe\s*$/i,"").replace(/\s+-\s+Recipe$/,""):p.title.replace(/[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}☀-➿️]/gu,"").trim();
     const t=new Date(p.date);p.ts=isNaN(t)?0:t.getTime();
-    const base=p.short.replace(/\|\s*(City Guide|Road Trip)\s*-\s*/i," ").replace(/^(.*?) - Recipe$/i,"$1");
+    const base=p.short.replace(/\|\s*(City Guide|Road Trip|Trip Guide)\s*-\s*/i," ").replace(/^(.*?) - Recipe$/i,"$1");
     p.slug=slug(base);p.path={recipes:"/recipes/",travel:"/travel/","eat-out":"/our-daily-life/",living:"/our-daily-life/"}[key]+p.slug+"/";
     ALL.push(p);
   }
@@ -72,14 +72,14 @@ function stars(p){
   for(const b of p.blocks){const m=b[1].match(/[★✩☆]{3,}/);if(m)return m[0];}return"";
 }
 function subline(p){
-  if(p.kind==="travel"){const parts=p.short.split("|");return parts[1]?parts[1].replace(/(City Guide|Road Trip)\s*-\s*/i,"").trim():"";}
+  if(p.kind==="travel"){const parts=p.short.split("|");return parts[1]?parts[1].replace(/(City Guide|Road Trip|Trip Guide)\s*-\s*/i,"").trim():"";}
   if(p.kind==="eat-out"){const s=stars(p);return s?`<span class="stars" aria-label="Rating ${s.split("★").length-1} out of 5">${s}</span>`:"";}
   return "";
 }
-function titleOf(p){return p.kind==="travel"?p.short.split("|")[0].trim().replace(/^(.)(.*)$/,(m,a,b)=>a+b.toLowerCase()).replace(/\b(\w)/g,c=>c.toUpperCase()).replace(/\bDe\b/g,"de"):p.short;}
+function titleOf(p){return p.kind==="travel"?p.short.split("|")[0].trim().replace(/^(.)(.*)$/,(m,a,b)=>a+b.toLowerCase()).replace(/(^|[\s-])(\w)/g,(m,a,c)=>a+c.toUpperCase()).replace(/\bDe\b/g,"de"):p.short;}
 function stampInner(p,big){
   if(p.photo) return `<div class="stampin photo"><img src="${src(p.photo.cover)}" alt="${esc(titleOf(p))}" loading="${big?"eager":"lazy"}" decoding="async"></div>`;
-  return `<div class="stampin" style="--tint:${tint(p)}"><span class="mono"${big?' style="font-size:96px"':""}>${esc(mono(p))}</span><span class="soon">Photo coming soon</span></div>`;
+  return `<div class="stampin" style="--tint:${tint(p)}"><span class="mono"${big?' style="font-size:clamp(36px,13vw,96px);max-width:100%;overflow-wrap:anywhere;text-align:center"':""}>${esc(mono(p))}</span><span class="soon">Photo coming soon</span></div>`;
 }
 function card(p){
   const kindLabel={recipes:(p.tags.find(t=>["desserts","main dishes","appetizers","breakfast","drinks","bread"].includes(t))||"recipe"),travel:"City guide","eat-out":p.tags.includes("restaurant")?"Restaurant":"Hotel",living:"At home"}[p.kind];
@@ -171,46 +171,84 @@ function home(){
 }
 
 /* ---- trip map ---- */
-const EU=window.SITE.EU;delete EU.pts["Aveiro"];
-const CITY_POSTS={"Porto":[],"Vigo":["VIGO"],"Barcelona":["BARCELONA"],"Picos de Europa":["PICOS DE EUROPA"],"Milan":["MILAN","ITALY"],"Cinque Terre":["CINQUE TERRE","ITALY"],"Pisa":["PISA","ITALY"],"Florence":["FLORENCE","ITALY"],"Venice":["VENICE","ITALY"],"Verona":["VERONA","ITALY"],"Budapest":["BUDAPEST","Christmas Markets"],"Prague":["PRAGUE","Christmas Markets"],"Vienna":["VIENNA","Christmas Markets"]};
-const LBL={"Porto":[-12,4,"end"],"Aveiro":[-12,14,"end"],"Vigo":[-12,-2,"end"],"Barcelona":[12,4,"start"],"Picos de Europa":[0,-14,"middle"],"Milan":[-10,-10,"end"],"Cinque Terre":[-12,10,"end"],"Pisa":[-6,22,"middle"],"Florence":[12,14,"start"],"Venice":[12,-6,"start"],"Verona":[0,-14,"middle"],"Budapest":[12,4,"start"],"Prague":[12,-4,"start"],"Vienna":[-12,-8,"end"]};
+const MAP=window.SITE.MAP;
+const CITY_POSTS={"Porto":[],"Vigo":["VIGO"],"Barcelona":["BARCELONA"],"Picos de Europa":["PICOS DE EUROPA"],"Milan":["MILAN","ITALY"],"Cinque Terre":["CINQUE TERRE","ITALY"],"Pisa":["PISA","ITALY"],"Florence":["FLORENCE","ITALY"],"Venice":["VENICE","ITALY"],"Verona":["VERONA","ITALY"],"Budapest":["BUDAPEST","Christmas Markets"],"Prague":["PRAGUE","Christmas Markets"],"Vienna":["VIENNA","Christmas Markets"],"Beijing":["BEIJING","CHINA |"],"Xi'an":["XI'AN","CHINA |"],"Chengdu":["CHENGDU","CHINA |"],"Guilin":["GUILIN","CHINA |"],"Yangshuo":["YANGSHUO","CHINA |"],"Hangzhou":["HANGZHOU","CHINA |"],"Shanghai":["SHANGHAI","CHINA |"]};
+const LBL={"Porto":[-12,4,"end"],"Aveiro":[-12,14,"end"],"Vigo":[-12,-2,"end"],"Barcelona":[12,4,"start"],"Picos de Europa":[0,-14,"middle"],"Milan":[-10,-10,"end"],"Cinque Terre":[-12,10,"end"],"Pisa":[-6,22,"middle"],"Florence":[12,14,"start"],"Venice":[12,-6,"start"],"Verona":[0,-14,"middle"],"Budapest":[12,4,"start"],"Prague":[12,-4,"start"],"Vienna":[-12,-8,"end"],"Beijing":[12,4,"start"],"Xi'an":[12,4,"start"],"Chengdu":[-12,4,"end"],"Guilin":[-12,0,"end"],"Yangshuo":[12,12,"start"],"Hangzhou":[-12,14,"end"],"Shanghai":[12,4,"start"]};
 const HOME=new Set(["Porto"]);
-const TRIPS=[{id:"italy",name:"8 days in Northern Italy",air:true,stops:["Milan","Cinque Terre","Pisa","Florence","Verona","Venice"]},{id:"xmas",name:"8 days of Christmas markets",air:true,stops:["Budapest","Prague","Vienna"]},{id:"vigo",name:"weekend road trip",air:false,stops:["Vigo"]},{id:"bcn",name:"Barcelona and Montserrat trip",air:true,stops:["Barcelona"]},{id:"picos",name:"Picos de Europa road trip",air:false,via:["Pontevedra","Santiago","Coruna","Oviedo","Gijon","Cangas","Arenas","Potes","FuenteDe"],stops:["Picos de Europa"]}];
+const TRIPS=[{id:"italy",name:"8 days in Northern Italy",air:true,stops:["Milan","Cinque Terre","Pisa","Florence","Verona","Venice"]},{id:"xmas",name:"8 days of Christmas markets",air:true,stops:["Budapest","Prague","Vienna"]},{id:"vigo",name:"weekend road trip",air:false,stops:["Vigo"]},{id:"bcn",name:"Barcelona and Montserrat trip",air:true,stops:["Barcelona"]},{id:"picos",name:"Picos de Europa road trip",air:false,via:["Pontevedra","Santiago","Coruna","Oviedo","Gijon","Cangas","Arenas","Potes","FuenteDe"],stops:["Picos de Europa"]},{id:"china",name:"15 days in China",air:true,stops:["Beijing","Xi'an","Chengdu","Guilin","Yangshuo","Hangzhou","Shanghai"]}];
 const tripOf=c=>TRIPS.find(tr=>tr.stops.includes(c));
 const TRIPLINE={picos:"Porto → Pontevedra → Santiago → A Coruña → Oviedo → Gijón → Cangas de Onís → Arenas de Cabrales → Potes → Fuente Dé"};
 function plane(a,c,b){const t=.5,x=(1-t)*(1-t)*a[0]+2*(1-t)*t*c[0]+t*t*b[0],y=(1-t)*(1-t)*a[1]+2*(1-t)*t*c[1]+t*t*b[1];const dx=2*(1-t)*(c[0]-a[0])+2*t*(b[0]-c[0]),dy=2*(1-t)*(c[1]-a[1])+2*t*(b[1]-c[1]);const ang=Math.atan2(dy,dx)*180/Math.PI;
-  return `<g class="plane" transform="translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${ang.toFixed(1)})"><path d="M9,0 L-3,-2 L-7,-8 L-9,-8 L-6,-2 L-11,-1.5 L-13,-4 L-14.5,-4 L-13,0 L-14.5,4 L-13,4 L-11,1.5 L-6,2 L-9,8 L-7,8 L-3,2 Z"/></g>`;}
+  return `<g class="plane" transform="translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${ang.toFixed(1)})"><g class="pi"><path d="M9,0 L-3,-2 L-7,-8 L-9,-8 L-6,-2 L-11,-1.5 L-13,-4 L-14.5,-4 L-13,0 L-14.5,4 L-13,4 L-11,1.5 L-6,2 L-9,8 L-7,8 L-3,2 Z"/></g></g>`;}
 function tripMap(){
-  const pins=Object.entries(EU.pts).map(([c,[x,y]])=>{const [dx,dy,an]=LBL[c]||[12,4,"start"];
-    return `<g class="pin${HOME.has(c)?" home":""}" data-c="${esc(c)}" tabindex="0" role="button" aria-label="${esc(c)}"><circle class="ring" cx="${x}" cy="${y}" r="6"/><circle class="dot" cx="${x}" cy="${y}" r="7"/><text x="${x+dx}" y="${y+dy}" text-anchor="${an}">${esc(c)}</text></g>`;}).join("");
+  const P=MAP.pts;
+  const pins=Object.entries(P).map(([c,[x,y]])=>{const [dx,dy,an]=LBL[c]||[12,4,"start"];
+    return `<g class="pin${HOME.has(c)?" home":""}" data-c="${esc(c)}" transform="translate(${x},${y})" tabindex="0" role="button" aria-label="${esc(c)}"><g class="pi"><circle class="hit" r="12"/><circle class="ring" r="4.5"/><circle class="dot" r="5"/><text x="${dx}" y="${dy}" text-anchor="${an}">${esc(c)}</text></g></g>`;}).join("");
   const routes=TRIPS.map(tr=>{
-    const P=EU.pts,a=P.Porto,b=P[tr.stops[0]];
-    const lift=tr.air?Math.max(90,Math.hypot(b[0]-a[0],b[1]-a[1])*.32):0;
-    const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2-lift;
-    const out=tr.air?`<path class="leg air" d="M${a[0]},${a[1]} Q${mx},${my} ${b[0]},${b[1]}"/>`+plane(a,[mx,my],b):`<path class="leg road" d="M${a[0]},${a[1]} ${(tr.via||[]).map(v=>"L"+EU.via[v].join(",")).join(" ")} L${b[0]},${b[1]}"/>`;
+    const a=P.Porto,b=P[tr.stops[0]];let out;
+    if(tr.air){const d=Math.hypot(b[0]-a[0],b[1]-a[1]),lift=Math.min(150,Math.max(22,d*.3));const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2-lift;
+      out=`<path class="leg air" d="M${a[0]},${a[1]} Q${mx},${my} ${b[0]},${b[1]}"/>`+plane(a,[mx,my],b);}
+    else out=`<path class="leg road" d="M${a[0]},${a[1]} ${(tr.via||[]).map(v=>"L"+MAP.via[v].join(",")).join(" ")} L${b[0]},${b[1]}"/>`;
     const path=tr.stops.length>1?`<path class="leg hop" d="M${tr.stops.map(c=>P[c].join(",")).join(" L")}"/>`:"";
     return `<g class="trip" data-trip="${tr.id}">${out}${path}</g>`;}).join("");
   const guides=ALL.filter(p=>p.kind==="travel").length;
-  return `<div class="tmap"><div class="mbox"><svg viewBox="0 0 ${EU.W} ${EU.H}" role="img" aria-label="Map of the places we've written about"><rect class="sea" width="${EU.W}" height="${EU.H}"/><path class="land" d="${EU.land}"/><path class="vis" d="${EU.visited}"/>${routes}${pins}</svg>
+  const places=Object.keys(P).filter(c=>!HOME.has(c)).length;
+  return `<div class="tmap"><div class="mbox"><button type="button" class="mreset" hidden>Show all trips</button><svg viewBox="0 0 ${MAP.W} ${MAP.H}" role="img" aria-label="Map of the places we've written about"><rect class="sea" x="-2000" y="-2000" width="${MAP.W+4000}" height="${MAP.H+4000}"/><path class="land" d="${MAP.land}"/><path class="vis" d="${MAP.visited}"/>${routes}${pins}</svg>
   <div class="legend"><span><i class="h"></i>Home</span><span><i></i>We've been</span></div></div>
-  <div class="mpanel"><div class="stat"><div><b>${Object.keys(EU.pts).filter(c=>!HOME.has(c)).length}</b><span>Places</span></div><div><b>5</b><span>Countries</span></div><div><b>${guides}</b><span>City guides</span></div></div><div class="mpanel" id="mpanel">${mapDefault(guides)}</div></div></div>`;
+  <div class="mpanel"><div class="stat"><div><b>${places}</b><span>Places</span></div><div><b>6</b><span>Countries</span></div><div><b>${guides}</b><span>City guides</span></div></div><div class="mpanel" id="mpanel">${mapDefault(guides)}</div></div></div>`;
 }
 function mapDefault(guides){
   return `<p class="hint">Tap a pin to see what we wrote about each place.</p>
   <div class="mlist">${latest("travel",3).map(mItem).join("")}</div>`;
 }
 function mItem(p){return `<a href="${H(p.id)}">${p.photo?`<img src="${src(p.photo.cover)}" alt="" loading="lazy">`:"<span></span>"}<span><b>${esc(titleOf(p))}</b><small>${kindName[p.kind]}${subline(p)&&p.kind==="travel"?" · "+esc(subline(p)):""}</small></span></a>`;}
+function mapScale(svg,vb){
+  const cw=svg.getBoundingClientRect().width||MAP.W,s=vb[2]/cw*.85;
+  svg.querySelectorAll(".pi").forEach(g=>g.setAttribute("transform",`scale(${s.toFixed(4)})`));
+  return s;
+}
+function mapLabels(svg,s,first,vb){
+  const placed=[],pins=[...svg.querySelectorAll(".pin")];
+  const dots=pins.map(g=>{const c=g.dataset.c;return MAP.pts[c];});
+  const order=pins.slice().sort((a,b)=>(b.classList.contains("on")-a.classList.contains("on"))||(b.classList.contains("intrip")-a.classList.contains("intrip"))||(first.indexOf(a.dataset.c)<0)-(first.indexOf(b.dataset.c)<0)*0);
+  for(const g of order){
+    const c=g.dataset.c,[x,y]=MAP.pts[c],[dx,dy,an]=LBL[c]||[12,4,"start"],w=c.length*7.2*s,h=13*s;
+    let a2=an,dx2=dx;if(an==="start"&&x+dx*s+w>vb[0]+vb[2]-4*s){a2="end";dx2=-Math.abs(dx);}else if(an==="end"&&x+dx*s-w<vb[0]+4*s){a2="start";dx2=Math.abs(dx);}
+    const tx=g.querySelector("text");tx.setAttribute("x",dx2);tx.setAttribute("text-anchor",a2);
+    let x0=x+dx2*s;if(a2==="end")x0-=w;else if(a2==="middle")x0-=w/2;const y0=y+dy*s-h*.8;
+    const box=[x0,y0,x0+w,y0+h];
+    const hit=placed.some(q=>!(box[2]<q[0]||box[0]>q[2]||box[3]<q[1]||box[1]>q[3]))||dots.some(([px,py])=>(px!==x||py!==y)&&px>box[0]-4*s&&px<box[2]+4*s&&py>box[1]-4*s&&py<box[3]+4*s);
+    g.classList.toggle("nolabel",hit);if(!hit)placed.push(box);
+  }
+}
 function initMap(){
   const panel=document.getElementById("mpanel");if(!panel)return;
-  const pins=[...view.querySelectorAll(".tmap .pin")];
-  const svg=view.querySelector(".tmap svg");
+  const svg=view.querySelector(".tmap svg"),reset=view.querySelector(".tmap .mreset");
+  const pins=[...svg.querySelectorAll(".pin")];
+  const FULL=[0,0,MAP.W,MAP.H];let vb=FULL.slice(),anim=0;
+  const first=["Porto","Barcelona","Vienna","Prague","Budapest","Florence","Beijing","Shanghai","Chengdu","Xi'an","Guilin"];
+  const draw=()=>{svg.setAttribute("viewBox",vb.map(v=>v.toFixed(2)).join(" "));return mapScale(svg,vb);};
+  const settle=()=>mapLabels(svg,draw(),first,vb);
+  const fit=names=>{
+    const xs=names.map(c=>MAP.pts[c][0]),ys=names.map(c=>MAP.pts[c][1]);
+    let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+    let w=Math.max(x1-x0,60)*1.6+40,h=Math.max(y1-y0,30)*1.6+40;const ar=MAP.W/MAP.H;
+    if(w/h<ar)w=h*ar;else h=w/ar;w=Math.min(w,MAP.W);h=Math.min(h,MAP.H);
+    let cx=(x0+x1)/2,cy=(y0+y1)/2;let x=Math.min(Math.max(cx-w/2,0),MAP.W-w),y=Math.min(Math.max(cy-h/2,0),MAP.H-h);return [x,y,w,h];};
+  const go=to=>{cancelAnimationFrame(anim);const from=vb.slice(),t0=performance.now(),D=matchMedia("(prefers-reduced-motion: reduce)").matches?0:550;
+    const step=now=>{const k=D?Math.min(1,(now-t0)/D):1,e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;vb=from.map((v,i)=>v+(to[i]-v)*e);draw();if(k<1)anim=requestAnimationFrame(step);else settle();};
+    anim=requestAnimationFrame(step);reset.hidden=to===FULL;};
   const pick=g=>{const c=g.dataset.c;pins.forEach(x=>x.classList.toggle("on",x===g));
-    const tr=tripOf(c);svg.classList.toggle("focus",!!tr);view.querySelectorAll(".tmap .trip").forEach(x=>x.classList.toggle("lit",!!tr&&x.dataset.trip===tr.id));
+    const tr=tripOf(c);svg.classList.toggle("focus",!!tr);svg.querySelectorAll(".trip").forEach(x=>x.classList.toggle("lit",!!tr&&x.dataset.trip===tr.id));
     pins.forEach(x=>x.classList.toggle("intrip",!!tr&&tr.stops.includes(x.dataset.c)));
+    go(fit(tr?tr.stops:[c]));
     const posts=(CITY_POSTS[c]||[]).map(SLIDEP).filter(Boolean);
     panel.classList.remove("swap");void panel.offsetWidth;panel.classList.add("swap");
-    panel.innerHTML=HOME.has(c)?`<h3><small>Home sweet home</small>${esc(c)}</h3><p class="hint">This is where we live, cook and plan every trip. Every journey on this map starts here.</p>`:`<h3><small>We've been to</small>${esc(c)}</h3>${tripOf(c)?`<p class="hint trip-line">Part of our ${esc(tripOf(c).name)}: ${TRIPLINE[tripOf(c).id]?esc(TRIPLINE[tripOf(c).id]):["Porto"].concat(tripOf(c).stops).map(s=>s===c?`<b>${esc(s)}</b>`:esc(s)).join(" → ")}</p>`:""}<div class="mlist">${posts.map(mItem).join("")}</div>`;};
+    panel.innerHTML=HOME.has(c)?`<h3><small>Home sweet home</small>${esc(c)}</h3><p class="hint">This is where we live, cook and plan every trip. Every journey on this map starts here.</p>`:`<h3><small>We've been to</small>${esc(c)}</h3>${tr?`<p class="hint trip-line">Part of our ${esc(tr.name)}: ${TRIPLINE[tr.id]?esc(TRIPLINE[tr.id]):["Porto"].concat(tr.stops).map(s=>s===c?`<b>${esc(s)}</b>`:esc(s)).join(" → ")}</p>`:""}<div class="mlist">${posts.map(mItem).join("")}</div>`;};
+  reset.addEventListener("click",()=>{pins.forEach(x=>x.classList.remove("on","intrip"));svg.classList.remove("focus");svg.querySelectorAll(".trip").forEach(x=>x.classList.remove("lit"));go(FULL);panel.innerHTML=mapDefault();});
   pins.forEach(g=>{g.addEventListener("click",()=>pick(g));g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(g);}});});
+  settle();
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!document.body.contains(svg)){ro.disconnect();return;}settle();});ro.observe(svg);}
 }
 
 /* ---- motion: reveal below the fold ---- */
@@ -310,10 +348,10 @@ function drawRecipes(){
 function listPage(kind,kicker,title,intro,extra=""){
   return `<div class="wrap"><div class="pagehead"><span class="kicker">${kicker}</span><h1>${title}</h1><p>${intro}</p></div>${extra}<div class="grid ${kind==="travel"?"wide":""}" id="lgrid">${latest(kind,99).map(card).join("")}</div></div>`;
 }
-const COUNTRIES=["Austria","Czech Republic","Hungary","Italy","Spain"];
+const COUNTRIES=["Austria","China","Czech Republic","Hungary","Italy","Spain"];
 function travel(){
   const chips=`<div class="countries" role="group" aria-label="Filter by country"><button class="chip" data-country="all" aria-pressed="true">All countries</button>${COUNTRIES.map(c=>`<button class="chip" data-country="${c.toLowerCase()}" aria-pressed="false">${c}</button>`).join("")}</div>`;
-  return listPage("travel","where we've been","City guides","Day-by-day plans from our trips around Europe, from a weekend in Vigo to eight days chasing Christmas markets through Vienna, Prague and Budapest.",`<section class="block" style="padding-top:0">${tripMap()}</section>`+chips);
+  return listPage("travel","where we've been","City guides","Day-by-day plans from our trips, from a weekend in Vigo and eight days chasing Christmas markets through Vienna, Prague and Budapest to fifteen days across China.",`<section class="block" style="padding-top:0">${tripMap()}</section>`+chips);
 }
 function living(f){
   const opts=[["all","Everything"],["eat-out","Eating out"],["living","Home & celebrations"]];
@@ -362,6 +400,16 @@ function gallery(p){
   if(!p.photo||!p.photo.g.length)return"";
   return `<div class="gallery">${p.photo.g.map(g=>`<button type="button" data-full="img/${g}.webp" aria-label="Open photo"><img src="img/${g}.webp" alt="" loading="lazy"></button>`).join("")}</div>`;
 }
+function seriesParts(p){return p.series?ALL.filter(q=>q.series===p.series).sort((a,b)=>a.part-b.part):[];}
+function seriesNav(p){
+  const parts=seriesParts(p);if(!parts.length)return"";const name=parts[0].seriesName||"This trip";
+  return `<nav class="series" aria-label="${esc(name)}"><span class="k">${esc(name)}</span><ol>${parts.map(q=>`<li${q===p?' class="on"':""}><a href="${H(q.id)}"${q===p?' aria-current="page"':""}><i>${q.part?q.part:"★"}</i>${q.part?esc(titleOf(q)):"Full itinerary"}</a></li>`).join("")}</ol></nav>`;
+}
+function seriesNext(p){
+  const parts=seriesParts(p);if(!parts.length)return"";const k=parts.indexOf(p),prev=parts[k-1],next=parts[k+1];
+  const a=(q,lbl,cls)=>q?`<a class="${cls}" href="${H(q.id)}"><small>${lbl}</small>${q.part?esc(titleOf(q)):"Full itinerary"}</a>`:"<span></span>";
+  return `<div class="series-next">${a(prev,"Previous stop","prev")}${a(next,next&&!p.part?"Start with":"Next stop","next")}</div>`;
+}
 function postView(p){
   const b=p.blocks;let html="",i=0;let ingrN=0;let sc=false;const R=p.kind==="recipes";const T=s=>R?withTimers(fmtText(s)):fmtText(s);
   while(i<b.length){
@@ -388,8 +436,8 @@ function postView(p){
   <div class="post"><article><div class="dateline">${esc(p.date||"")}</div><h1>${esc(titleOf(p))}</h1>${subline(p)?`<div class="dateline" style="margin-top:4px">${p.kind==="eat-out"?subline(p):esc(subline(p))}</div>`:""}
     <div class="tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
     ${p.kind==="recipes"?`<a class="avg" id="avgRating" href="#rate" hidden></a>`:""}
-    <div class="body"><div class="feature"><div class="stampbox"${coverStyle(p)}>${stampInner(p,true)}</div></div>${html}${figs(p,b.length)}
-    </div>${feedbackHTML(p)}</article>
+    <div class="body"><div class="feature"><div class="stampbox"${coverStyle(p)}>${stampInner(p,true)}</div></div>${seriesNav(p)}${html}${figs(p,b.length)}
+    ${seriesNext(p)}</div>${feedbackHTML(p)}</article>
   <aside class="side">
     <div class="box"><img class="couple" src="${IMG.couple}" alt=""><p>Richie and Andrew, cooking, travelling and living together in Porto since 2016.</p><div class="socials">${SOCIAL}</div><div class="side-coffee">${COFFEE}</div></div>
     <div class="box"><h4>You might also like</h4><div class="mini">${more.map(q=>`<a href="${H(q.id)}">${q.photo?`<img src="${src(q.photo.cover)}" alt="" loading="lazy">`:`<i style="--tint:${tint(q)}">${esc(mono(q)).slice(0,3)}</i>`}<span>${esc(titleOf(q))}</span></a>`).join("")}</div></div>
@@ -403,7 +451,7 @@ function notFound(){
 }
 const SEC_DESC={home:"Recipes, city guides and daily life from Richie and Andrew, a couple from Porto. Portuguese classics, Christmas baking and trips around Europe.",
   recipes:"All our recipes: Portuguese classics from Maria Alice's notebook, Christmas baking and dishes we tasted abroad and rebuilt at home in Porto.",
-  travel:"Day by day city guides from our trips around Europe: Barcelona, the Picos de Europa, Northern Italy, Prague, Vienna, Budapest and more.",
+  travel:"Day by day city guides from our trips: China, Barcelona, the Picos de Europa, Northern Italy, Prague, Vienna, Budapest and more.",
   living:"Our home in Porto, Christmas at our place and honest reviews of the restaurants and hotels we love.",
   about:"Meet Richie and Andrew, the couple from Porto behind The 2 Planners. Together, enjoying the world since 2016."};
 function clip(s,n=158){s=s.replace(/\s+/g," ").trim();return s.length>n?s.slice(0,s.lastIndexOf(" ",n-1))+"...":s;}

@@ -302,11 +302,12 @@ nav.main a{position:relative;transition:color .2s ease,background .2s ease}
 .tmap .vis{fill:var(--stamp-edge);stroke:var(--card);stroke-width:.8}
 .tmap .route{fill:none;stroke:var(--red);stroke-width:1.4;stroke-dasharray:3 5;opacity:.55}
 .tmap .pin{cursor:pointer}
-.tmap .pin circle.dot{fill:var(--red);stroke:var(--card);stroke-width:2.5;transition:r .2s ease}
+.tmap .pin circle.dot{fill:var(--red);stroke:var(--card);stroke-width:2;transition:r .2s ease}
 .tmap .pin.home circle.dot{fill:var(--teal)}
 .tmap .pin circle.ring{fill:none;stroke:var(--red);stroke-width:1.5;opacity:0;transform-box:fill-box;transform-origin:center}
 .tmap .pin.home circle.ring{stroke:var(--teal)}
-.tmap .pin:hover circle.dot,.tmap .pin.on circle.dot{r:9}
+.tmap .pin:hover circle.dot,.tmap .pin.on circle.dot{r:7}
+.tmap .pin circle.hit{fill:transparent}
 .tmap .pin.on circle.ring,.tmap .pin:hover circle.ring{animation:ring 1.6s ease-out infinite}
 @keyframes ring{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(3)}}
 .tmap .pin text{font-family:var(--f-display);font-size:12.5px;font-weight:600;fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round;pointer-events:none}
@@ -412,3 +413,24 @@ footer img{height:24px;width:auto}
 footer .script{font-family:var(--f-script);font-size:28px;color:var(--script);letter-spacing:0}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* trip series + map regions */
+.series{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 1.6em}
+.series .k{display:block;font-family:var(--f-display);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.series ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.series li a{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border:1px solid var(--line);border-radius:999px;font-family:var(--f-display);font-size:13px;color:var(--ink);text-decoration:none;background:var(--paper)}
+.series li a i{font-style:normal;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--stamp);font-size:11px;font-weight:600}
+.series li a:hover{border-color:var(--ink)}
+.series li.on a{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.series li.on a i{background:var(--red);color:#fff}
+.series-next{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:2em 0 0}
+.series-next a{display:grid;min-width:0;gap:2px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);text-decoration:none;font-family:var(--f-display);font-size:16px;overflow-wrap:anywhere}
+.series-next a small{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.series-next a.next{text-align:right}
+.series-next a:hover{border-color:var(--ink)}
+@media (max-width:520px){.series-next{grid-template-columns:minmax(0,1fr)}.series-next a.next{text-align:left}}
+.tmap .mreset{position:absolute;top:10px;right:10px;z-index:1;font:600 12px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:999px;cursor:pointer}
+.tmap .leg{vector-effect:non-scaling-stroke}
+.tmap .pin.nolabel text{display:none}
+@media (max-width:600px){.tmap .legend{display:none}.tmap .mreset{font-size:10px;padding:6px 10px;top:6px;right:6px}}
+.tmap .pin.on text,.tmap .pin:hover text,.tmap .pin:focus-visible text{display:inline}
