@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Comments | The 2 Planners</title>
+<link rel="icon" type="image/webp" href="/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Italianno&display=swap">
+<link rel="stylesheet" href="/assets/style.css?v=2e433625c6">
+<style>
+[hidden]{display:none!important}
+.note{margin:0}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body)}
+.adm{max-width:860px;margin:0 auto;padding-block:32px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.adm h1{font-family:var(--f-display);font-weight:300;font-size:34px;margin:0 0 4px}
+.adm h2{font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:34px 0 12px}
+.adm .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.adm a.home{font-family:var(--f-display);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-decoration:none}
+.login{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.login input{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);min-width:0;flex:1 1 220px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:8px;margin-bottom:12px}
+.item .meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-family:var(--f-display);font-size:13px}
+.item .meta a{color:var(--teal);text-decoration:none}
+.item p{margin:0;overflow-wrap:anywhere}
+.item .acts{display:flex;gap:8px;flex-wrap:wrap}
+.b{font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;border-radius:999px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.b.ok{background:var(--teal);border-color:var(--teal);color:#fff}
+.b.no{border-color:var(--red);color:var(--red)}
+.note,.msg{color:var(--muted);font-family:var(--f-display);font-size:14px}
+.msg{min-height:1.3em;color:var(--teal)}
+.confirm{display:inline-flex;gap:6px;align-items:center;font-family:var(--f-display);font-size:13px}
+</style>
+</head>
+<body>
+<main class="adm">
+  <div class="top"><h1>Comments</h1><a class="home" href="/">← Back to the site</a></div>
+  <p class="note">Approve or reject new comments, and remove published ones. Only people with the password can see this page.</p>
+  <form class="login" id="login"><label for="key" class="note" style="flex-basis:100%;margin-top:6px">Admin password</label><input id="key" type="password" autocomplete="current-password"><button class="b" type="submit">Open</button></form>
+  <p class="msg" id="msg" aria-live="polite"></p>
+  <div id="app" hidden>
+    <h2>Waiting for approval <span id="pc"></span></h2>
+    <div id="pending"></div>
+    <h2>Published</h2>
+    <div id="published"></div>
+  </div>
+</main>
+<script>
+const TITLES={"recipes/3-cheese-fondue":"3 Cheese Fondue Recipe","recipes/40min-burguer-buns":"40min Burguer Buns Recipe","recipes/aletria-portuguese-capellini-pudding":"Aletria - Portuguese Capellini Pudding - Recipe","recipes/aperol-spritz":"Aperol Spritz Recipe","recipes/apple-crumble":"Apple Crumble Recipe","recipes/baba-de-camelo-portuguese-camel-drool":"Baba de Camelo - Portuguese Camel Drool Recipe","recipes/banana-pancakes":"Banana Pancakes Recipe","recipes/basic-fresh-basil-pesto":"Basic Fresh Basil Pesto Recipe","recipes/biscoito-teixeira-lemon-and-cinnamon-biscuit":"Biscoito Teixeira - Lemon and Cinnamon Biscuit Recipe","recipes/bolo-do-caco-madeira-island-typical-bread":"Bolo do Caco - Madeira Island Typical Bread Recipe","recipes/brazilian-cheese-bread":"Brazilian Cheese Bread Recipe","recipes/bread-crumb-cake":"Bread crumb Cake Recipe","recipes/broa-de-milho-portuguese-corn-bread":"Broa de Milho - Portuguese Corn Bread Recipe","recipes/brownie-strawberry-trifle":"Brownie Strawberry Trifle Recipe","recipes/caipirinha":"Caipirinha Recipe","recipes/caramel-egg-pudding":"Caramel Egg Pudding Recipe","recipes/caramelized-almond-tart":"Caramelized Almond Tart Recipe","recipes/caramelized-popcorn-with-m-ms":"Caramelized Popcorn with M&Ms Recipe","recipes/cheese-sticks":"Cheese Sticks Recipe","recipes/cheesy-nachos":"Cheesy Nachos Recipe","recipes/chicken-quiche":"Chicken Quiche Recipe","recipes/chicken-stroganoff":"Chicken Stroganoff Recipe","recipes/chinese-almond-chicken-with-yangzhou-fried-rice":"Chinese Almond Chicken with Yangzhou Fried Rice Recipe","recipes/chinese-dumplings-gyoza":"Chinese Dumplings - Gyoza Recipe","recipes/chinese-fried-chicken-with-sticky-sauce":"Chinese Fried Chicken with Sticky Sauce Recipe","recipes/chinese-mango-pudim":"Chinese Mango Pudim Recipe","recipes/chocolate-cake-with-shavers":"Chocolate Cake with Shavers Recipe","recipes/chocolate-chip-cookies":"Chocolate Chip Cookies Recipe","recipes/chocolate-marble-cake":"Chocolate Marble Cake Recipe","recipes/chocolate-salami-with-portuguese-biscuit":"Chocolate Salami with Portuguese Biscuit Recipe","recipes/chocolate-zucchini-cake":"Chocolate Zucchini Cake Recipe","recipes/christmas-morning-cinnamon-rolls":"Christmas Morning Cinnamon Rolls Recipe","recipes/cinnamon-cookies":"Cinnamon Cookies Recipe","recipes/classic-tiramisu":"Classic Tiramisu Recipe","recipes/coca-cola-cake":"Coca-Cola Cake Recipe","recipes/coconut-shrimp-curry":"Coconut Shrimp Curry Recipe","recipes/cod-with-cornbread-crust":"Cod with Cornbread Crust Recipe","recipes/cod-with-cream":"Cod with Cream Recipe","recipes/double-chocolate-chunk-cookies":"Double Chocolate Chunk Cookies Recipe","recipes/easy-beef-nachos":"Easy Beef Nachos Recipe","recipes/easy-crepe":"Easy Crepe Recipe","recipes/easy-homemade-mayonnaise":"Easy Homemade Mayonnaise Recipe","recipes/fig-and-brie-burger":"Fig and Brie Burger Recipe","recipes/flaming-garlic-whisky-king-prawns":"Flaming Garlic & Whisky King Prawns Recipe","recipes/focaccia-al-pomodoro-recipe-cherry-tomato-bread":"Focaccia al Pomodoro Recipe - Cherry Tomato Bread","recipes/francesinha-little-frenchie-portuguese-sandwich":"Francesinha - Little Frenchie Portuguese Sandwich Recipe","recipes/french-tart-tatin":"French Tart Tatin Recipe","recipes/fried-blue-whiting-with-bean-salad":"Fried Blue Whiting with Bean Salad Recipe","recipes/fried-chicken":"Fried Chicken Recipe","recipes/golden-codfish":"Golden Codfish Recipe","recipes/homemade-peanut-butter-and-hazelnut-butter":"Homemade Peanut Butter and Hazelnut Butter Recipe","recipes/homemade-seasoned-rustic-french-fries":"Homemade Seasoned Rustic French Fries Recipe","recipes/italian-panna-cotta":"Italian Panna Cotta Recipe","recipes/italian-pizza-dough":"Italian Pizza Dough Recipe","recipes/key-lime-pie":"Key Lime Pie Recipe","recipes/lemon-and-pepper-calamari":"Lemon and Pepper Calamari Recipe","recipes/m-ms-and-salted-caramel-cake":"M&Ms and Salted Caramel Cake Recipe","recipes/m-ms-cookies":"M&Ms Cookies Recipe","recipes/mcdonald-s-mcflurry-m-ms":"MCDonald's McFlurry M&Ms Recipe","recipes/meat-and-potato-pie-without-crust":"Meat and Potato Pie without Crust Recipe","recipes/molotof-portuguese-egg-whites-pudding":"Molotof - Portuguese Egg Whites Pudding Recipe","recipes/nuts-and-apricot-cookies":"Nuts and Apricot Cookies","recipes/passion-fruit-mousse":"Passion Fruit Mousse Recipe","recipes/pastel-de-nata-pie":"Pastel de Nata Pie Recipe","recipes/pavlova-with-fresh-berries":"Pavlova with Fresh Berries Recipe","recipes/pavlova-with-sweet-egg-cream":"Pavlova with Sweet Egg Cream Recipe","recipes/perfect-lemonade":"Perfect Lemonade Recipe","recipes/pesto-puff-pastry":"Pesto Puff Pastry Recipe","recipes/portuguese-bifanas-pork-steaks-sandwich":"Portuguese Bifanas (Pork Steaks Sandwich) Recipe","recipes/portuguese-biscuit-ice-cream":"Portuguese Biscuit Ice Cream Recipe","recipes/portuguese-chicken-soup":"Portuguese Chicken Soup Recipe","recipes/portuguese-chorizo-and-mozzarella-stuffed-bread":"Portuguese Chorizo and Mozzarella Stuffed Bread Recipe","recipes/portuguese-christmas-doughnuts-sonhos-de-natal":"Portuguese Christmas Doughnuts - Sonhos de Natal - Recipe","recipes/portuguese-codfish-and-fries":"Portuguese Codfish and Fries Recipe","recipes/portuguese-creme-brulee":"Portuguese Crème Brûlée Recipe","recipes/portuguese-duck-rice":"Portuguese Duck Rice Recipe","recipes/portuguese-fried-codfish-with-puree":"Portuguese Fried Codfish with Purée Recipe","recipes/portuguese-kale-soup":"Portuguese Kale Soup Recipe","recipes/portuguese-meat-or-ham-and-cheese-rissoles":"Portuguese Meat or Ham and Cheese Rissoles Recipe","recipes/portuguese-pumpkin-christmas-fritters":"Portuguese Pumpkin Christmas Fritters Recipe","recipes/portuguese-salt-codfish-fritters-pataniscas-de-bacalhau":"Portuguese Salt Codfish Fritters - Pataniscas de Bacalhau Recipe","recipes/portuguese-sausage-puffs-with-honey-mustard-sauce":"Portuguese Sausage Puffs with Honey-Mustard Sauce Recipe","recipes/portuguese-seafood-rice":"Portuguese Seafood Rice Recipe","recipes/portuguese-steamed-clams":"Portuguese Steamed Clams Recipe","recipes/potato-cake":"Potato Cake Recipe","recipes/rabanadas-portuguese-french-toast-christmas":"Rabanadas - Portuguese French Toast Christmas Recipe","recipes/red-berry-cheesecake":"Red Berry Cheesecake Recipe","recipes/red-velvet-cupcakes-with-cream-cheese-frosting":"Red Velvet Cupcakes with Cream Cheese Frosting","recipes/rosemary-focaccia-bread":"Rosemary Focaccia Bread Recipe","recipes/russian-salad":"Russian Salad Recipe","recipes/salmon-ceviche-in-toasted-wraps":"Salmon Ceviche in Toasted Wraps","recipes/salmon-teriyaki-skewers-with-pineapple":"Salmon Teriyaki Skewers with Pineapple Recipe","recipes/salted-caramel-toffee-cheesecake":"Salted Caramel (Toffee) Cheesecake Recipe","recipes/salted-caramel-and-nuts-cheesecake-pots":"Salted Caramel and Nuts Cheesecake Pots Recipe","recipes/salted-caramel-petit-gateau":"Salted Caramel Petit Gâteau Recipe","recipes/simple-and-easy-garlic-bread":"Simple and Easy Garlic Bread Recipe","recipes/sparkling-berry-sangria":"Sparkling Berry Sangria Recipe","recipes/spicy-cheese-balls-with-bacon":"Spicy Cheese Balls with Bacon Recipe","recipes/spicy-gizzards":"Spicy Gizzards Recipe","recipes/stewed-peas-with-poached-eggs":"Stewed Peas with Poached Eggs Recipe","recipes/stewed-veal-with-peas-and-carrots":"Stewed Veal with Peas and Carrots Recipe","recipes/the-grand-big-mac-hamburger":"The Grand Big Mac - Hamburger Recipe","recipes/traditional-brigadeiros-brazilian-fudge-balls":"Traditional Brigadeiros (Brazilian Fudge Balls) Recipe","recipes/tuna-pate":"Tuna Pate Recipe","recipes/turkey-schnitzel-with-buttery-roasted-potatoes":"Turkey Schnitzel with Buttery Roasted Potatoes Recipe","recipes/vegetarian-leek-with-potato-sticks":"Vegetarian Leek with Potato Sticks Recipe","recipes/vietnamese-garlic-prawns":"Vietnamese Garlic Prawns Recipe","recipes/white-buche-de-noel-yule-log-cake":"White Bûche de Noël (Yule Log Cake) Recipe","recipes/white-wine-sangria":"White Wine Sangria Recipe","recipes/yogurt-cake":"Yogurt Cake Recipe","travel/picos-de-europa-4-days-in-the-picos-de-europa":"PICOS DE EUROPA | Road Trip - 4 days in the Picos de Europa 🇪🇸","travel/barcelona-4-days-in-barcelona-montserrat":"BARCELONA | City Guide - 4 days in Barcelona + Montserrat 🇪🇸","travel/vigo-2-days-in-vigo-spain":"VIGO | City Guide - 2 days in Vigo, Spain 🇪🇸","travel/milan-1-day-in-milan":"MILAN | City Guide - 1 day in Milan 🇮🇹","travel/cinque-terre-2-days-in-cinque-terre":"CINQUE TERRE | City Guide - 2 days in Cinque Terre 🇮🇹","travel/pisa-1-day-in-pisa":"PISA | City Guide - 1 day in Pisa 🇮🇹","travel/italy-8-days-in-northern-italy":"ITALY | City Guide - 8 days in Northern Italy 🇮🇹","travel/florence-2-days-in-florence":"FLORENCE | City Guide - 2 days in Florence 🇮🇹","travel/venice-1-day-in-venice":"VENICE | City Guide - 1 day in Venice 🇮🇹","travel/verona-1-day-in-verona":"VERONA | City Guide - 1 day in Verona 🇮🇹","travel/budapest-2-days-in-budapest":"BUDAPEST | City Guide - 2 days in Budapest 🇭🇺","travel/prague-3-days-in-prague":"PRAGUE | City Guide - 3 days in Prague 🇨🇿","travel/vienna-3-days-in-vienna":"VIENNA | City Guide - 3 days in Vienna 🇦🇹","travel/christmas-markets-8-days-finding-european-christmas-markets":"Christmas Markets | City Guide - 8 days finding European Christmas Markets 🇭🇺🇨🇿🇦🇹","our-daily-life/aveiro-montebelo-vista-alegre-hotel":"Aveiro | Montebelo Vista Alegre Hotel 🇵🇹","our-daily-life/cruel-restaurant-porto-portugal":"Cruel Restaurant - Porto, Portugal","our-daily-life/yuko-tavern-restaurant-porto-portugal":"Yuko Tavern Restaurant - Porto, Portugal","our-daily-life/un-poco-loco-restaurant-aveiro-portugal":"Un Poco Loco Restaurant - Aveiro, Portugal","our-daily-life/eleven-lab-concept-restaurant-porto-portugal":"Eleven Lab Concept Restaurant - Porto, Portugal","our-daily-life/how-to-set-up-your-christmas-tree":"How to set up your Christmas Tree 🎄","our-daily-life/our-fun-and-loving-christmas-cards":"Our Fun and Loving Christmas Cards!"};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const when=iso=>new Date(iso).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+let KEY="";try{KEY=sessionStorage.getItem("t2p-admin")||"";}catch(e){}
+async function api(method,body){
+  const r=await fetch("/api/admin",{method,headers:{"x-admin-key":KEY,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"Something went wrong");return j;
+}
+function card(c,pending){
+  const t=TITLES[c.post]||c.post;
+  return `<div class="item" data-id="${esc(c.id)}" data-post="${esc(c.post)}"><div class="meta"><b>${esc(c.name)}</b><span>${esc(when(c.date))} · <a href="/${esc(c.post)}/" target="_blank" rel="noopener">${esc(t)}</a></span></div>
+  <p>${esc(c.text).replace(/\n/g,"<br>")}</p>
+  <div class="acts">${pending?`<button class="b ok" data-a="approve">Approve</button><button class="b no" data-a="reject">Reject</button>`:`<button class="b no" data-a="ask">Delete</button>`}</div></div>`;
+}
+async function load(){
+  $("msg").textContent="Loading...";
+  try{
+    const d=await api("GET");
+    $("app").hidden=false;$("login").hidden=true;$("msg").textContent="";
+    $("pc").textContent=d.pending.length?`(${d.pending.length})`:"";
+    $("pending").innerHTML=d.pending.length?d.pending.map(c=>card(c,true)).join(""):`<p class="note">Nothing waiting. All caught up!</p>`;
+    $("published").innerHTML=d.published.length?d.published.map(c=>card(c,false)).join(""):`<p class="note">No published comments yet.</p>`;
+  }catch(e){$("msg").textContent=e.message;$("login").hidden=false;$("app").hidden=true;}
+}
+$("login").addEventListener("submit",e=>{e.preventDefault();KEY=$("key").value;try{sessionStorage.setItem("t2p-admin",KEY);}catch(err){}load();});
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button[data-a]");if(!b)return;
+  const it=b.closest(".item"),a=b.dataset.a;
+  if(a==="ask"){b.parentElement.innerHTML=`<span class="confirm">Delete this comment for good? <button class="b no" data-a="delete">Yes, delete</button><button class="b" data-a="cancel">Cancel</button></span>`;return;}
+  if(a==="cancel"){load();return;}
+  b.disabled=true;
+  try{await api("POST",{action:a,id:it.dataset.id,post:it.dataset.post});
+    await load();$("msg").textContent={approve:"Approved. It's now on the post.",reject:"Rejected and removed.",delete:"Deleted."}[a];}
+  catch(err){$("msg").textContent=err.message;b.disabled=false;}
+});
+if(KEY)load();
+</script>
+</body>
+</html>
