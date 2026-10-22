@@ -40,6 +40,12 @@ function navigate(href){
 }
 if(PATHS){
   document.querySelectorAll("[data-k]").forEach(a=>a.setAttribute("href",H(a.dataset.k)));
+  if(currentKey()==="notfound"){
+    const m=location.pathname.match(/(\d{2,6})(?:\.html)?\/?$/);
+    if(m&&window.SITE.OLDIDS){const ti=Object.keys(window.SITE.OLDIDS).find(k=>window.SITE.OLDIDS[k]===m[1]);
+      const special={"About Us":SEC_PATH.about,"Search by Country":SEC_PATH.travel};
+      const pp=ti&&(special[ti]||(ALL.find(p=>p.title===ti)||{}).path);if(pp)location.replace(pp);}
+  }
   if(location.hash.length>1){const k=location.hash.slice(1);const to=SEC_PATH[k]||(k==="eat-out"?SEC_PATH.living:byId[k]&&byId[k].path);if(to)history.replaceState({},"",to);}
   document.addEventListener("click",e=>{
     const a=e.target.closest("a[href]");if(!a||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||a.target==="_blank")return;
