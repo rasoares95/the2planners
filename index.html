@@ -804,6 +804,9 @@ function route(){
   initCarousel();initSurprise();initMap();
   if(byId[h]&&byId[h].kind==="recipes"){initScaler();initTimers(byId[h]);}
   requestAnimationFrame(initReveal);
+  const pageName={recipes:"Recipes",travel:"Travel",living:"Our daily life","eat-out":"Our daily life",about:"About us"}[h]||(byId[h]?titleOf(byId[h]):"");
+  document.title=pageName?pageName+" | The 2 Planners":"The 2 Planners";
+  trackView("/"+(byId[h]||pageName?h:""),document.title);
   if(h==="recipes"){
     drawRecipes();
     document.getElementById("q").addEventListener("input",e=>{recipeState.q=e.target.value;drawRecipes();});
@@ -832,6 +835,10 @@ function route(){
       catch(err){const r=document.createRange();r.selectNodeContents(document.getElementById("mail"));const s=getSelection();s.removeAllRanges();s.addRange(r);e.target.textContent="Selected, press copy";}
     });
   }
+}
+/* visit counting (GoatCounter, live site only): one view per page, including each post */
+function trackView(path,title){
+  let n=0;const go=()=>{const g=window.goatcounter;if(g&&g.count){g.count({path,title});}else if(n++<20){setTimeout(go,500);}};go();
 }
 function openLightbox(start){
   const els=[...view.querySelectorAll(".feature .stampin.photo img, [data-full]")];
@@ -918,6 +925,7 @@ document.addEventListener("click",e=>{
 
 </script>
 
+<script data-goatcounter="https://the2planners.goatcounter.com/count" data-goatcounter-settings='{"no_onload": true}' async src="//gc.zgo.at/count.js"></script>
 <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="the2planners" data-description="Support The 2 Planners!" data-message="" data-color="#F6D365" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
 </body>
 </html>
