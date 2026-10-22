@@ -128,8 +128,8 @@ function initCarousel(){
 const kindName={recipes:"Recipe",travel:"City guide","eat-out":"Eating out",living:"Daily life"};
 function bento(){
   const pool=ALL.filter(p=>p.photo).sort(()=>Math.random()-.5);
-  const picks=[];for(const p of pool){if(picks.length===3)break;if(picks.length<2&&picks.some(q=>q.kind===p.kind))continue;picks.push(p);}
-  for(const p of pool){if(picks.length===3)break;if(!picks.includes(p))picks.push(p);}
+  const big=pool.find(p=>p.kind!=="recipes");
+  const picks=[big,...pool.filter(p=>p!==big).slice(0,2)];
   return `<div class="bento">${picks.map(p=>`<a href="${H(p.id)}"><img src="${src(p.photo.cover)}" alt="" loading="lazy"><span class="bc"><small>${kindName[p.kind]}</small><b>${esc(titleOf(p))}</b></span></a>`).join("")}</div>`;
 }
 function surprise(){
