@@ -18,11 +18,11 @@ const TINTS={desserts:"#C9A27A",breakfast:"#D7B56D","main dishes":"#9AAE8C",appe
 const ALL=[];
 for(const [key,name] of Object.entries(SECTIONS)){
   for(const p of DATA[name]){
-    p.kind=key;p.id="p-"+slug(p.title);p.tags=p.tags||[];p.photo=PH[p.title]||null;
+    p.kind=key;p.id="p-"+slug(p.was||p.title);p.tags=p.tags||[];p.photo=PH[p.title]||null;
     p.short=key==="recipes"?p.title.replace(/\s*-?\s*Recipe\s*$/i,"").replace(/\s+-\s+Recipe$/,""):p.title.replace(/[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}☀-➿️]/gu,"").trim();
     const t=new Date(p.date);p.ts=isNaN(t)?0:t.getTime();
     const base=p.short.replace(/\|\s*(City Guide|Road Trip|Trip Guide)\s*-\s*/i," ").replace(/^(.*?) - Recipe$/i,"$1");
-    p.slug=slug(base);p.path={recipes:"/recipes/",travel:"/travel/","eat-out":"/our-daily-life/",living:"/our-daily-life/"}[key]+p.slug+"/";
+    p.slug=p.slugAs||slug(base);p.path={recipes:"/recipes/",travel:"/travel/","eat-out":"/our-daily-life/",living:"/our-daily-life/"}[key]+p.slug+"/";
     ALL.push(p);
   }
 }
@@ -76,7 +76,7 @@ function subline(p){
   if(p.kind==="eat-out"){const s=stars(p);return s?`<span class="stars" aria-label="Rating ${s.split("★").length-1} out of 5">${s}</span>`:"";}
   return "";
 }
-function titleOf(p){return p.kind==="travel"?p.short.split("|")[0].trim().replace(/^(.)(.*)$/,(m,a,b)=>a+b.toLowerCase()).replace(/(^|[\s-])(\w)/g,(m,a,c)=>a+c.toUpperCase()).replace(/\bDe\b/g,"de"):p.short;}
+function titleOf(p){return p.kind==="travel"?p.short.split("|")[0].trim().replace(/^(.)(.*)$/,(m,a,b)=>a+b.toLowerCase()).replace(/(^|[\s-])(\w)/g,(m,a,c)=>a+c.toUpperCase()).replace(/\bDe\b/g,"de").replace(/\bAnd\b/g,"and"):p.short;}
 function stampInner(p,big){
   if(p.photo) return `<div class="stampin photo"><img src="${src(p.photo.cover)}" alt="${esc(titleOf(p))}" loading="${big?"eager":"lazy"}" decoding="async"></div>`;
   return `<div class="stampin" style="--tint:${tint(p)}"><span class="mono"${big?' style="font-size:clamp(36px,13vw,96px);max-width:100%;overflow-wrap:anywhere;text-align:center"':""}>${esc(mono(p))}</span><span class="soon">Photo coming soon</span></div>`;
@@ -93,10 +93,10 @@ function card(p){
 const latest=(kind,n)=>ALL.filter(p=>p.kind===kind).sort((a,b)=>b.ts-a.ts).slice(0,n);
 
 const F=pre=>ALL.find(p=>p.title.startsWith(pre));
-const SLIDES=[["Cinque Terre","City guide","Five villages, two days and one very full camera roll."],["Pastel de Nata Pie","Recipe","Our favourite custard tart, made big enough to share. Or not."],["PRAGUE","City guide","Three snowy days, a lot of mulled wine and the prettiest Christmas markets."],["Francesinha","Recipe","Porto's famous sandwich, sauce and all. Bring an appetite."],["Christmas Markets","City guide","Budapest, Vienna and Prague in eight days of lights and hot chocolate."]];
+const SLIDES=[["Cinque Terre","City guide","Five villages, two days and one very full camera roll."],["Pastel de Nata Pie","Recipe","Our favorite custard tart, made big enough to share. Or not."],["PRAGUE","City guide","Three snowy days, a lot of mulled wine and the prettiest Christmas markets."],["Francesinha","Recipe","Porto's famous sandwich, sauce and all. Bring an appetite."],["Christmas Markets","City guide","Budapest, Vienna and Prague in eight days of lights and hot chocolate."]];
 const SLIDEP=pre=>F(pre)||ALL.find(p=>p.title.toUpperCase().startsWith(pre.toUpperCase()));
 function carousel(){
-  const sl=[`<div class="sl banner on" data-i="0"><img src="${IMG.hero}" alt="The 2 Planners banner: a chef holding a cake and a traveller with suitcases and a camera"></div>`];
+  const sl=[`<div class="sl banner on" data-i="0"><img src="${IMG.hero}" alt="The 2 Planners banner: a chef holding a cake and a traveler with suitcases and a camera"></div>`];
   SLIDES.forEach(([pre,k,line],n)=>{const p=SLIDEP(pre);if(!p||!p.photo)return;
     sl.push(`<div class="sl" data-i="${sl.length}" aria-hidden="true"><img src="${src(p.photo.cover)}" alt="" loading="lazy"><div class="cap"><div class="in"><span class="k">${esc(k)}</span><h2>${esc(titleOf(p))}</h2><p>${esc(line)}</p><a href="${H(p.id)}" tabindex="-1">Read the post</a></div></div></div>`);});
   return `<div class="car" id="car" role="region" aria-roledescription="carousel" aria-label="Featured posts">${sl.join("")}
@@ -156,7 +156,7 @@ function home(){
   return `${carousel()}
   <div class="wrap">
     <div class="lede">
-      <div class="script">Hello,<br>we're Richie &amp; Andrew</div>
+      <div class="script">Hello,<br>we're Richie &amp; André</div>
       <div><p>A couple from Porto who like to do everything ourselves. We cook our way through family recipes and far-off cuisines, plan trips down to the last tram stop, and write it all up here.</p>
       <div class="pillars">Cooking · Travelling · Daily life</div></div>
     </div>
@@ -165,26 +165,39 @@ function home(){
     <section class="block"><div class="shead"><h2>From our <em>kitchen</em></h2><a href="${H("recipes")}">All ${ALL.filter(p=>p.kind==="recipes").length} recipes</a></div><div class="grid">${latest("recipes",8).map(card).join("")}</div></section>
     <section class="block"><div class="shead"><h2>Where we've <em>been</em></h2><a href="${H("travel")}">All city guides</a></div>${tripMap()}</section>
     <section class="block"><div class="shead"><h2>Our daily <em>life</em></h2><a href="${H("living")}">See it all</a></div><div class="grid">${livingList("all").split("</a>").slice(0,4).join("</a>")+"</a>"}</div></section>
-    <section class="block"><div class="since"><img src="${IMG.couple}" alt="Illustration of Richie and Andrew, arms round each other, with a ribbon reading Since 30.04.2016">
-      <div><p>It started with a Christmas present for Richie's mum. For a whole year we recreated her recipes and designed her a cookbook, Maria Alice's Homemade Recipes. We never stopped.</p><p class="coffee-note">Enjoying our recipes and guides? Everything here is free, and a coffee keeps us cooking and planning.</p><div class="since-cta"><a class="btn" href="${H("about")}" style="text-decoration:none;display:inline-block">Meet us</a>${COFFEE}</div></div></div></section>
+    <section class="block"><div class="since"><img src="${IMG.couple}" alt="Illustration of Richie and André, arms round each other, with a ribbon reading Since 30.04.2016">
+      <div><p>It started with a Christmas present for Richie's mom. For a whole year we recreated her recipes and designed her a cookbook, Maria Alice's Homemade Recipes. We never stopped.</p><p class="coffee-note">Enjoying our recipes and guides? Everything here is free, and a coffee keeps us cooking and planning.</p><div class="since-cta"><a class="btn" href="${H("about")}" style="text-decoration:none;display:inline-block">Meet us</a>${COFFEE}</div></div></div></section>
   </div>`;
 }
 
 /* ---- trip map ---- */
 const MAP=window.SITE.MAP;
-const CITY_POSTS={"Porto":[],"Vigo":["VIGO"],"Barcelona":["BARCELONA"],"Picos de Europa":["PICOS DE EUROPA"],"Milan":["MILAN","ITALY"],"Cinque Terre":["CINQUE TERRE","ITALY"],"Pisa":["PISA","ITALY"],"Florence":["FLORENCE","ITALY"],"Venice":["VENICE","ITALY"],"Verona":["VERONA","ITALY"],"Budapest":["BUDAPEST","Christmas Markets"],"Prague":["PRAGUE","Christmas Markets"],"Vienna":["VIENNA","Christmas Markets"],"Beijing":["BEIJING","CHINA |"],"Xi'an":["XI'AN","CHINA |"],"Chengdu":["CHENGDU","CHINA |"],"Guilin":["GUILIN","CHINA |"],"Yangshuo":["YANGSHUO","CHINA |"],"Hangzhou":["HANGZHOU","CHINA |"],"Shanghai":["SHANGHAI","CHINA |"],"Bangkok":["BANGKOK","THAILAND |"],"Chiang Mai":["CHIANG MAI","THAILAND |"],"Phuket":["PHUKET","THAILAND |"],"Phi Phi":["PHI PHI","THAILAND |"],"Railay":["RAILAY","THAILAND |"],"Khao Sok":["KHAO SOK","THAILAND |"],"Koh Samui":["KOH SAMUI","THAILAND |"]};
-const LBL={"Porto":[-12,4,"end"],"Aveiro":[-12,14,"end"],"Vigo":[-12,-2,"end"],"Barcelona":[12,4,"start"],"Picos de Europa":[0,-14,"middle"],"Milan":[-10,-10,"end"],"Cinque Terre":[-12,10,"end"],"Pisa":[-6,22,"middle"],"Florence":[12,14,"start"],"Venice":[12,-6,"start"],"Verona":[0,-14,"middle"],"Budapest":[12,4,"start"],"Prague":[12,-4,"start"],"Vienna":[-12,-8,"end"],"Beijing":[12,4,"start"],"Xi'an":[12,4,"start"],"Chengdu":[-12,4,"end"],"Guilin":[-12,0,"end"],"Yangshuo":[12,12,"start"],"Hangzhou":[-12,14,"end"],"Shanghai":[12,4,"start"],"Bangkok":[12,4,"start"],"Chiang Mai":[12,4,"start"],"Phuket":[-12,6,"end"],"Phi Phi":[12,12,"start"],"Railay":[12,2,"start"],"Khao Sok":[-12,-4,"end"],"Koh Samui":[12,4,"start"]};
+const CITY_POSTS={"Porto":[],"Vigo":["VIGO"],"Barcelona":["BARCELONA"],"Picos de Europa":["PICOS DE EUROPA"],"Milan":["MILAN","ITALY"],"Cinque Terre":["CINQUE TERRE","ITALY"],"Pisa":["PISA","ITALY"],"Florence":["FLORENCE","ITALY"],"Venice":["VENICE","ITALY"],"Verona":["VERONA","ITALY"],"Budapest":["BUDAPEST","Christmas Markets"],"Prague":["PRAGUE","Christmas Markets"],"Vienna":["VIENNA","Christmas Markets"],"Beijing":["BEIJING","CHINA |"],"Xi'an":["XI'AN","CHINA |"],"Chengdu":["CHENGDU","CHINA |"],"Guilin":["GUILIN","CHINA |"],"Yangshuo":["YANGSHUO","CHINA |"],"Hangzhou":["HANGZHOU","CHINA |"],"Shanghai":["SHANGHAI","CHINA |"],"Bangkok":["BANGKOK","THAILAND |"],"Chiang Mai":["CHIANG MAI","THAILAND |"],"Phuket":["PHUKET","THAILAND |"],"Phi Phi":["PHI PHI","THAILAND |"],"Railay":["RAILAY","THAILAND |"],"Khao Sok":["KHAO SOK","THAILAND |"],"Koh Samui":["KOH SAMUI","THAILAND |"],"Helsinki":["HELSINKI","FINLAND |"],"Rovaniemi":["ROVANIEMI","FINLAND |"],"Istanbul":["ISTANBUL","TURKEY |"],"Ankara":["ANKARA","TURKEY |"],"Cappadocia":["CAPPADOCIA","TURKEY |"],"Konya":["KONYA","TURKEY |"],"Pamukkale":["PAMUKKALE","TURKEY |"],"Ephesus":["EPHESUS","TURKEY |"],"Izmir":["IZMIR","TURKEY |"],"Brussels":["BRUSSELS","BELGIUM AND AMSTERDAM |"],"Ghent":["GHENT","BELGIUM AND AMSTERDAM |"],"Antwerp":["ANTWERP","BELGIUM AND AMSTERDAM |"],"Amsterdam":["AMSTERDAM","BELGIUM AND AMSTERDAM |"],"Munich":["MUNICH"],"Berlin":["BERLIN"],"Frankfurt":["FRANKFURT"],"Heidelberg":["FRANKFURT"],"Madrid":["MADRID"],"Sintra":["SINTRA"],"Madeira":["MADEIRA"],"Hamburg":["HAMBURG"]};
+const LBL={"Porto":[-12,4,"end"],"Aveiro":[-12,14,"end"],"Vigo":[-12,-2,"end"],"Barcelona":[12,4,"start"],"Picos de Europa":[0,-14,"middle"],"Milan":[-10,-10,"end"],"Cinque Terre":[-12,10,"end"],"Pisa":[-6,22,"middle"],"Florence":[12,14,"start"],"Venice":[12,-6,"start"],"Verona":[0,-14,"middle"],"Budapest":[12,4,"start"],"Prague":[12,-4,"start"],"Vienna":[-12,-8,"end"],"Beijing":[12,4,"start"],"Xi'an":[12,4,"start"],"Chengdu":[-12,4,"end"],"Guilin":[-12,0,"end"],"Yangshuo":[12,12,"start"],"Hangzhou":[-12,14,"end"],"Shanghai":[12,4,"start"],"Bangkok":[12,4,"start"],"Chiang Mai":[12,4,"start"],"Phuket":[-12,6,"end"],"Phi Phi":[12,12,"start"],"Railay":[12,2,"start"],"Khao Sok":[-12,-4,"end"],"Koh Samui":[12,4,"start"],"Helsinki":[12,4,"start"],"Rovaniemi":[12,4,"start"],"Istanbul":[12,4,"start"],"Ankara":[12,4,"start"],"Cappadocia":[12,4,"start"],"Konya":[0,18,"middle"],"Pamukkale":[12,10,"start"],"Ephesus":[-12,10,"end"],"Izmir":[-12,-2,"end"],"Brussels":[12,8,"start"],"Ghent":[-12,6,"end"],"Antwerp":[12,-2,"start"],"Amsterdam":[12,4,"start"],"Munich":[12,4,"start"],"Berlin":[12,4,"start"],"Frankfurt":[12,4,"start"],"Heidelberg":[12,4,"start"],"Madrid":[12,4,"start"],"Sintra":[-12,4,"end"],"Madeira":[12,4,"start"],"Hamburg":[12,4,"start"]};
 const HOME=new Set(["Porto"]);
-const COUNTRY_OF={"Porto":"Portugal","Vigo":"Spain","Barcelona":"Spain","Picos de Europa":"Spain","Milan":"Italy","Cinque Terre":"Italy","Pisa":"Italy","Florence":"Italy","Venice":"Italy","Verona":"Italy","Budapest":"Hungary","Prague":"Czech Republic","Vienna":"Austria","Beijing":"China","Xi'an":"China","Chengdu":"China","Guilin":"China","Yangshuo":"China","Hangzhou":"China","Shanghai":"China","Bangkok":"Thailand","Chiang Mai":"Thailand","Phuket":"Thailand","Phi Phi":"Thailand","Railay":"Thailand","Khao Sok":"Thailand","Koh Samui":"Thailand"};
-const TRIPS=[{id:"italy",name:"8 days in Northern Italy",air:true,stops:["Milan","Cinque Terre","Pisa","Florence","Verona","Venice"]},{id:"xmas",name:"8 days of Christmas markets",air:true,stops:["Budapest","Prague","Vienna"]},{id:"vigo",name:"weekend road trip",air:false,stops:["Vigo"]},{id:"bcn",name:"Barcelona and Montserrat trip",air:true,stops:["Barcelona"]},{id:"picos",name:"Picos de Europa road trip",air:false,via:["Pontevedra","Santiago","Coruna","Oviedo","Gijon","Cangas","Arenas","Potes","FuenteDe"],stops:["Picos de Europa"]},{id:"china",name:"15 days in China",air:true,stops:["Beijing","Xi'an","Chengdu","Guilin","Yangshuo","Hangzhou","Shanghai"]},{id:"thai",name:"Thailand honeymoon",air:true,stops:["Bangkok","Chiang Mai","Phuket","Phi Phi","Railay","Khao Sok","Koh Samui"]}];
+const COUNTRY_OF={"Porto":"Portugal","Vigo":"Spain","Barcelona":"Spain","Picos de Europa":"Spain","Milan":"Italy","Cinque Terre":"Italy","Pisa":"Italy","Florence":"Italy","Venice":"Italy","Verona":"Italy","Budapest":"Hungary","Prague":"Czech Republic","Vienna":"Austria","Beijing":"China","Xi'an":"China","Chengdu":"China","Guilin":"China","Yangshuo":"China","Hangzhou":"China","Shanghai":"China","Bangkok":"Thailand","Chiang Mai":"Thailand","Phuket":"Thailand","Phi Phi":"Thailand","Railay":"Thailand","Khao Sok":"Thailand","Koh Samui":"Thailand","Helsinki":"Finland","Rovaniemi":"Finland","Istanbul":"Turkey","Ankara":"Turkey","Cappadocia":"Turkey","Konya":"Turkey","Pamukkale":"Turkey","Ephesus":"Turkey","Izmir":"Turkey","Brussels":"Belgium","Ghent":"Belgium","Antwerp":"Belgium","Amsterdam":"Netherlands","Munich":"Germany","Berlin":"Germany","Frankfurt":"Germany","Heidelberg":"Germany","Madrid":"Spain","Sintra":"Portugal","Madeira":"Portugal","Hamburg":"Germany"};
+const OFFSHORE=new Set(["Madeira"]);
+const groupOf=c=>COUNTRY_OF[c];
+const TRIPS=[{id:"italy",name:"8 days in Northern Italy",air:true,stops:["Milan","Cinque Terre","Pisa","Florence","Verona","Venice"]},{id:"xmas",name:"8 days of Christmas markets",air:true,stops:["Budapest","Prague","Vienna"]},{id:"vigo",name:"weekend road trip",air:false,stops:["Vigo"]},{id:"bcn",name:"Barcelona and Montserrat trip",air:true,stops:["Barcelona"]},{id:"picos",name:"Picos de Europa road trip",air:false,via:["Pontevedra","Santiago","Coruna","Oviedo","Gijon","Cangas","Arenas","Potes","FuenteDe"],stops:["Picos de Europa"]},{id:"china",name:"15 days in China",air:true,stops:["Beijing","Xi'an","Chengdu","Guilin","Yangshuo","Hangzhou","Shanghai"]},{id:"thai",name:"Thailand honeymoon",air:true,stops:["Bangkok","Chiang Mai","Phuket","Phi Phi","Railay","Khao Sok","Koh Samui"]},{id:"fin",name:"Finland trip",air:true,stops:["Helsinki","Rovaniemi"]},{id:"tur",name:"organized tour of Turkey",air:true,stops:["Istanbul","Ankara","Cappadocia","Konya","Pamukkale","Ephesus","Izmir"]},{id:"bnl",name:"winter trip to Belgium and Amsterdam",air:true,stops:["Brussels","Ghent","Antwerp","Amsterdam"]},{id:"muc",name:"Munich trip",air:true,stops:["Munich"]},{id:"ber",name:"Berlin trip",air:true,stops:["Berlin"]},{id:"fra",name:"Frankfurt trip",air:true,stops:["Frankfurt","Heidelberg"]},{id:"mad",name:"long weekend in Madrid",air:true,stops:["Madrid"]},{id:"sin",name:"Sintra trip",air:false,stops:["Sintra"]},{id:"mde",name:"Madeira road trip",air:true,stops:["Madeira"]},{id:"ham",name:"Christmas markets trip",air:true,stops:["Hamburg"]}];
 const tripOf=c=>TRIPS.find(tr=>tr.stops.includes(c));
 const TRIPLINE={picos:"Porto → Pontevedra → Santiago → A Coruña → Oviedo → Gijón → Cangas de Onís → Arenas de Cabrales → Potes → Fuente Dé"};
 function plane(a,c,b){const t=.5,x=(1-t)*(1-t)*a[0]+2*(1-t)*t*c[0]+t*t*b[0],y=(1-t)*(1-t)*a[1]+2*(1-t)*t*c[1]+t*t*b[1];const dx=2*(1-t)*(c[0]-a[0])+2*t*(b[0]-c[0]),dy=2*(1-t)*(c[1]-a[1])+2*t*(b[1]-c[1]);const ang=Math.atan2(dy,dx)*180/Math.PI;
   return `<g class="plane" transform="translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${ang.toFixed(1)})"><g class="pi"><path d="M9,0 L-3,-2 L-7,-8 L-9,-8 L-6,-2 L-11,-1.5 L-13,-4 L-14.5,-4 L-13,0 L-14.5,4 L-13,4 L-11,1.5 L-6,2 L-9,8 L-7,8 L-3,2 Z"/></g></g>`;}
+const LBL_C={"Spain":[0,20,"middle"],"Italy":[12,14,"start"],"Czech Republic":[-12,-6,"end"],"Austria":[-12,12,"end"],"Hungary":[12,8,"start"],"Finland":[12,4,"start"],"China":[12,4,"start"],"Thailand":[12,4,"start"],"Turkey":[12,4,"start"],"Belgium":[-12,8,"end"],"Netherlands":[12,-4,"start"],"Germany":[12,4,"start"],"Portugal":[-12,4,"end"]};
+function mapCountries(){
+  const by={};Object.keys(MAP.pts).filter(c=>!HOME.has(c)&&groupOf(c)).forEach(c=>(by[groupOf(c)]=by[groupOf(c)]||[]).push(c));
+  return Object.entries(by).map(([n,cs])=>{const m=cs.filter(c=>!OFFSHORE.has(c)),k=m.length?m:cs;return [n,cs,+(k.reduce((a,c)=>a+MAP.pts[c][0],0)/k.length).toFixed(2),+(k.reduce((a,c)=>a+MAP.pts[c][1],0)/k.length).toFixed(2)];});
+}
 function tripMap(){
   const P=MAP.pts;
   const pins=Object.entries(P).map(([c,[x,y]])=>{const [dx,dy,an]=LBL[c]||[12,4,"start"];
-    return `<g class="pin${HOME.has(c)?" home":""}" data-c="${esc(c)}" transform="translate(${x},${y})" tabindex="0" role="button" aria-label="${esc(c)}"><g class="pi"><circle class="hit" r="12"/><circle class="ring" r="4.5"/><circle class="dot" r="5"/><text x="${dx}" y="${dy}" text-anchor="${an}">${esc(c)}</text></g></g>`;}).join("");
+    return `<g class="pin${HOME.has(c)?" home":""}" data-c="${esc(c)}" data-x="${x}" data-y="${y}" transform="translate(${x},${y})" tabindex="0" role="button" aria-label="${esc(c)}"><g class="pi"><circle class="hit" r="12"/><circle class="ring" r="4.5"/><circle class="dot" r="5"/><text x="${dx}" y="${dy}" text-anchor="${an}">${esc(c)}</text></g></g>`;}).join("");
+  const cpins=mapCountries().map(([n,cs,x,y])=>{const [dx,dy,an]=LBL_C[n]||[12,4,"start"];
+    return `<g class="cpin" data-ctry="${esc(n)}" data-x="${x}" data-y="${y}" transform="translate(${x},${y})" tabindex="0" role="button" aria-label="${esc(n)}: ${cs.length} ${cs.length===1?"place":"places"}"><g class="pi"><circle class="hit" r="13"/><circle class="ring" r="5.5"/><circle class="dot" r="6.5"/><text x="${dx}" y="${dy}" text-anchor="${an}">${esc(n)}</text></g></g>`;}).join("");
+  const CC=Object.fromEntries(mapCountries().map(([n,cs,x,y])=>[n,[x,y]])),done=new Set();
+  const ovlegs=TRIPS.filter(tr=>tr.air).map(tr=>{const n=groupOf(tr.stops[0]);if(done.has(n))return"";done.add(n);
+    const a=P.Porto,b=CC[n];const d=Math.hypot(b[0]-a[0],b[1]-a[1]),lift=Math.min(150,Math.max(22,d*.3));const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2-lift;
+    return `<path class="leg air" d="M${a[0]},${a[1]} Q${mx},${my} ${b[0]},${b[1]}"/>`+(d>60?plane(a,[mx,my],b):"");}).join("");
   const routes=TRIPS.map(tr=>{
     const a=P.Porto,b=P[tr.stops[0]];let out;
     if(tr.air){const d=Math.hypot(b[0]-a[0],b[1]-a[1]),lift=Math.min(150,Math.max(22,d*.3));const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2-lift;
@@ -194,12 +207,12 @@ function tripMap(){
     return `<g class="trip" data-trip="${tr.id}">${out}${path}</g>`;}).join("");
   const guides=ALL.filter(p=>p.kind==="travel").length;
   const places=Object.keys(P).filter(c=>!HOME.has(c)).length;
-  return `<div class="tmap"><div class="mbox"><button type="button" class="mreset" hidden>Show all trips</button><svg viewBox="0 0 ${MAP.W} ${MAP.H}" role="img" aria-label="Map of the places we've written about"><rect class="sea" x="-2000" y="-2000" width="${MAP.W+4000}" height="${MAP.H+4000}"/><path class="land" d="${MAP.land}"/><path class="vis" d="${MAP.visited}"/>${routes}${pins}</svg>
+  return `<div class="tmap"><div class="mbox"><button type="button" class="mreset" hidden>Show all trips</button><svg class="ov" viewBox="0 0 ${MAP.W} ${MAP.H}" role="img" aria-label="Map of the places we've written about"><rect class="sea" x="-2000" y="-2000" width="${MAP.W+4000}" height="${MAP.H+4000}"/><path class="land" d="${MAP.land}"/><path class="vis" d="${MAP.visited}"/>${routes}${pins}${cpins}</svg>
   <div class="legend"><span><i class="h"></i>Home</span><span><i></i>We've been</span></div></div>
-  <div class="mpanel"><div class="stat"><div><b>${places}</b><span>Places</span></div><div><b>${new Set(Object.keys(P).filter(c=>!HOME.has(c)).map(c=>COUNTRY_OF[c]).filter(Boolean)).size}</b><span>Countries</span></div><div><b>${guides}</b><span>City guides</span></div></div><div class="mpanel" id="mpanel">${mapDefault(guides)}</div></div></div>`;
+  <div class="mpanel"><div class="stat"><div><b>${places}</b><span>Places</span></div><div><b>${new Set(Object.keys(P).filter(c=>!HOME.has(c)).map(c=>COUNTRY_OF[c]).filter(Boolean)).size}</b><span>Countries</span></div><div><b>${guides}</b><span>City guides</span></div></div><div class="mchips" role="group" aria-label="Choose a country">${mapCountries().map(c=>c[0]).sort().map(n=>`<button type="button" class="chip" data-cc="${esc(n)}" aria-pressed="false">${esc(n)}</button>`).join("")}</div><div class="mpanel" id="mpanel">${mapDefault(guides)}</div></div></div>`;
 }
 function mapDefault(guides){
-  return `<p class="hint">Tap a pin to see what we wrote about each place.</p>
+  return `<p class="hint">Pick a country to see the places we visited and what we wrote about them.</p>
   <div class="mlist">${latest("travel",3).map(mItem).join("")}</div>`;
 }
 function mItem(p){return `<a href="${H(p.id)}">${p.photo?`<img src="${src(p.photo.cover)}" alt="" loading="lazy">`:"<span></span>"}<span><b>${esc(titleOf(p))}</b><small>${kindName[p.kind]}${subline(p)&&p.kind==="travel"?" · "+esc(subline(p)):""}</small></span></a>`;}
@@ -209,11 +222,12 @@ function mapScale(svg,vb){
   return s;
 }
 function mapLabels(svg,s,first,vb){
-  const placed=[],pins=[...svg.querySelectorAll(".pin")];
-  const dots=pins.map(g=>{const c=g.dataset.c;return MAP.pts[c];});
+  const ov=svg.classList.contains("ov");
+  const placed=[],pins=[...svg.querySelectorAll(ov?".cpin,.pin.home":".pin")];
+  const dots=pins.map(g=>[+g.dataset.x,+g.dataset.y]);
   const order=pins.slice().sort((a,b)=>(b.classList.contains("on")-a.classList.contains("on"))||(b.classList.contains("intrip")-a.classList.contains("intrip"))||(first.indexOf(a.dataset.c)<0)-(first.indexOf(b.dataset.c)<0)*0);
   for(const g of order){
-    const c=g.dataset.c,[x,y]=MAP.pts[c],[dx,dy,an]=LBL[c]||[12,4,"start"],w=c.length*7.2*s,h=13*s;
+    const c=g.dataset.c||g.dataset.ctry,x=+g.dataset.x,y=+g.dataset.y,[dx,dy,an]=(g.dataset.c?LBL[c]:LBL_C[c])||[12,4,"start"],w=c.length*(g.dataset.c?7.2:7.8)*s,h=13*s;
     let a2=an,dx2=dx;if(an==="start"&&x+dx*s+w>vb[0]+vb[2]-4*s){a2="end";dx2=-Math.abs(dx);}else if(an==="end"&&x+dx*s-w<vb[0]+4*s){a2="start";dx2=Math.abs(dx);}
     const tx=g.querySelector("text");tx.setAttribute("x",dx2);tx.setAttribute("text-anchor",a2);
     let x0=x+dx2*s;if(a2==="end")x0-=w;else if(a2==="middle")x0-=w/2;const y0=y+dy*s-h*.8;
@@ -238,15 +252,26 @@ function initMap(){
     let cx=(x0+x1)/2,cy=(y0+y1)/2;let x=Math.min(Math.max(cx-w/2,0),MAP.W-w),y=Math.min(Math.max(cy-h/2,0),MAP.H-h);return [x,y,w,h];};
   const go=to=>{cancelAnimationFrame(anim);const from=vb.slice(),t0=performance.now(),D=matchMedia("(prefers-reduced-motion: reduce)").matches?0:550;
     const step=now=>{const k=D?Math.min(1,(now-t0)/D):1,e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;vb=from.map((v,i)=>v+(to[i]-v)*e);draw();if(k<1)anim=requestAnimationFrame(step);else settle();};
-    anim=requestAnimationFrame(step);reset.hidden=to===FULL;};
-  const pick=g=>{const c=g.dataset.c;pins.forEach(x=>x.classList.toggle("on",x===g));
+    svg.classList.toggle("ov",to===FULL);anim=requestAnimationFrame(step);reset.hidden=to===FULL;};
+  const cpins=[...svg.querySelectorAll(".cpin")],chips=[...view.querySelectorAll(".tmap .mchips .chip")];
+  chips.forEach(b=>b.addEventListener("click",()=>{const g=cpins.find(x=>x.dataset.ctry===b.dataset.cc);if(g){pickCountry(g);const r=svg.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)svg.closest(".mbox").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"nearest"});}}));
+  const pickCountry=g=>{const n=g.dataset.ctry,cs=Object.keys(MAP.pts).filter(c=>groupOf(c)===n&&!HOME.has(c));
+    pins.forEach(x=>x.classList.remove("on","intrip"));svg.classList.remove("focus");svg.querySelectorAll(".trip").forEach(x=>x.classList.remove("lit"));
+    go(fit(cs));chips.forEach(b=>b.setAttribute("aria-pressed",b.dataset.cc===n));
+    const lit=TRIPS.filter(tr=>tr.stops.some(c=>cs.includes(c))).map(tr=>tr.id);svg.classList.add("focus");svg.querySelectorAll(".trip").forEach(x=>x.classList.toggle("lit",lit.includes(x.dataset.trip)));
+    const seen=new Set(),posts=[];cs.forEach(c=>(CITY_POSTS[c]||[]).map(SLIDEP).filter(Boolean).forEach(p=>{if(!seen.has(p.id)){seen.add(p.id);posts.push(p);}}));
+    const top=p=>p.part===0||p.title.toUpperCase().startsWith(n.toUpperCase())?0:1;posts.sort((a,b)=>top(a)-top(b));
+    panel.classList.remove("swap");void panel.offsetWidth;panel.classList.add("swap");
+    panel.innerHTML=`<h3><small>We've been to</small>${esc(n)}</h3><p class="hint">${cs.length} ${cs.length===1?"place":"places"}: ${cs.map(esc).join(" · ")}. Tap a city on the map to see its trip.</p><div class="mlist">${posts.map(mItem).join("")}</div>`;};
+  cpins.forEach(g=>{g.addEventListener("click",()=>pickCountry(g));g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pickCountry(g);}});});
+  const pick=g=>{const c=g.dataset.c;pins.forEach(x=>x.classList.toggle("on",x===g));chips.forEach(b=>b.setAttribute("aria-pressed",b.dataset.cc===groupOf(c)));
     const tr=tripOf(c);svg.classList.toggle("focus",!!tr);svg.querySelectorAll(".trip").forEach(x=>x.classList.toggle("lit",!!tr&&x.dataset.trip===tr.id));
     pins.forEach(x=>x.classList.toggle("intrip",!!tr&&tr.stops.includes(x.dataset.c)));
     go(fit(tr?tr.stops:[c]));
     const posts=(CITY_POSTS[c]||[]).map(SLIDEP).filter(Boolean);
     panel.classList.remove("swap");void panel.offsetWidth;panel.classList.add("swap");
     panel.innerHTML=HOME.has(c)?`<h3><small>Home sweet home</small>${esc(c)}</h3><p class="hint">This is where we live, cook and plan every trip. Every journey on this map starts here.</p>`:`<h3><small>We've been to</small>${esc(c)}</h3>${tr?`<p class="hint trip-line">Part of our ${esc(tr.name)}: ${TRIPLINE[tr.id]?esc(TRIPLINE[tr.id]):["Porto"].concat(tr.stops).map(s=>s===c?`<b>${esc(s)}</b>`:esc(s)).join(" → ")}</p>`:""}<div class="mlist">${posts.map(mItem).join("")}</div>`;};
-  reset.addEventListener("click",()=>{pins.forEach(x=>x.classList.remove("on","intrip"));svg.classList.remove("focus");svg.querySelectorAll(".trip").forEach(x=>x.classList.remove("lit"));go(FULL);panel.innerHTML=mapDefault();});
+  reset.addEventListener("click",()=>{pins.forEach(x=>x.classList.remove("on","intrip"));svg.classList.remove("focus");svg.querySelectorAll(".trip").forEach(x=>x.classList.remove("lit"));go(FULL);panel.innerHTML=mapDefault();chips.forEach(b=>b.setAttribute("aria-pressed","false"));});
   pins.forEach(g=>{g.addEventListener("click",()=>pick(g));g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(g);}});});
   settle();
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!document.body.contains(svg)){ro.disconnect();return;}settle();});ro.observe(svg);}
@@ -293,7 +318,7 @@ function scaleLine(s,f){
 function scalerHTML(p){
   if(p.kind!=="recipes")return"";
   const n=p.blocks.filter(b=>b[0]==="ul"&&scaleLine(b[1],1)!==null).length;if(n<2)return"";
-  return `<div class="scaler" role="group" aria-label="Scale the quantities"><span>Quantities</span>${[[.5,"½×"],[1,"1×"],[2,"2×"],[3,"3×"]].map(([f,l])=>`<button type="button" data-f="${f}" aria-pressed="${f===1}">${l}</button>`).join("")}<small>Making more or less? We'll do the maths. Cooking times stay roughly the same.</small></div>`;
+  return `<div class="scaler" role="group" aria-label="Scale the quantities"><span>Quantities</span>${[[.5,"½×"],[1,"1×"],[2,"2×"],[3,"3×"]].map(([f,l])=>`<button type="button" data-f="${f}" aria-pressed="${f===1}">${l}</button>`).join("")}<small>Making more or less? We'll do the math. Cooking times stay roughly the same.</small></div>`;
 }
 function initScaler(){
   const sc=view.querySelector(".scaler");if(!sc)return;
@@ -349,10 +374,10 @@ function drawRecipes(){
 function listPage(kind,kicker,title,intro,extra=""){
   return `<div class="wrap"><div class="pagehead"><span class="kicker">${kicker}</span><h1>${title}</h1><p>${intro}</p></div>${extra}<div class="grid ${kind==="travel"?"wide":""}" id="lgrid">${latest(kind,99).map(card).join("")}</div></div>`;
 }
-const COUNTRIES=["Austria","China","Czech Republic","Hungary","Italy","Spain","Thailand"];
+const COUNTRIES=["Austria","Belgium","China","Czech Republic","Finland","Germany","Hungary","Italy","Netherlands","Portugal","Spain","Thailand","Turkey"];
 function travel(){
   const chips=`<div class="countries" role="group" aria-label="Filter by country"><button class="chip" data-country="all" aria-pressed="true">All countries</button>${COUNTRIES.map(c=>`<button class="chip" data-country="${c.toLowerCase()}" aria-pressed="false">${c}</button>`).join("")}</div>`;
-  return listPage("travel","where we've been","City guides","Day-by-day plans from our trips, from a weekend in Vigo and eight days chasing Christmas markets through Vienna, Prague and Budapest to fifteen days across China and our honeymoon in Thailand.",`<section class="block" style="padding-top:0">${tripMap()}</section>`+chips);
+  return listPage("travel","where we've been","City guides","Day-by-day plans from our trips, from a weekend in Vigo and eight days chasing Christmas markets through Vienna, Prague and Budapest to fifteen days across China, a night train to Lapland, a coach tour of Turkey and our honeymoon in Thailand.",`<section class="block" style="padding-top:0">${tripMap()}</section>`+chips);
 }
 function living(f){
   const opts=[["all","Everything"],["eat-out","Eating out"],["living","Home & celebrations"]];
@@ -365,19 +390,19 @@ function livingList(f){
 function about(){
   const pics=[[87,"Florence"],[302,"Budapest"],[126,"Venice"],[566,"At home in Porto"],[12,""],[352,"Vienna"],[7,""],[274,"Budapest"],[355,"Vienna"]];
   return `<div class="wrap"><div class="pagehead"><span class="kicker">thanks for stopping by</span><h1>About us</h1></div>
-  <div class="about"><button type="button" class="aboutpic" data-full="${src(57)}" aria-label="Open photo"><img src="${src(57)}" alt="Richie and Andrew in Manarola, Cinque Terre"></button>
+  <div class="about"><button type="button" class="aboutpic" data-full="${src(57)}" aria-label="Open photo"><img src="${src(57)}" alt="Richie and André in Manarola, Cinque Terre"></button>
   <div class="body"><p>We are The2Planners, a couple in Porto, Portugal, who love to do everything ourselves.</p>
-  <p>It all began with a Christmas present for Richie's mum. For an entire year we recreated her recipes and designed her own cookbook, <em>Maria Alice's Homemade Recipes</em>. It was such an adventure that we couldn't stop, so now we share our life with you here.</p>
+  <p>It all began with a Christmas present for Richie's mom. For an entire year we recreated her recipes and designed her own cookbook, <em>Maria Alice's Homemade Recipes</em>. It was such an adventure that we couldn't stop, so now we share our life with you here.</p>
   <div class="people">
     <div class="person"><div class="phead"><img class="avatar" src="${src(138)}" alt="Richie"><h3>Richie</h3></div><div class="role">Content creator</div><p>Cheerful, adventurous and romantic.</p><p class="warn">Warning: not a morning person</p></div>
-    <div class="person"><div class="phead"><img class="avatar" src="${src(137)}" alt="Andrew"><h3>Andrew</h3></div><div class="role">Radiation oncologist</div><p>Funny, crazy and sweet.</p><p class="warn">Warning: cleaning maniac</p></div>
+    <div class="person"><div class="phead"><img class="avatar" src="${src(137)}" alt="André"><h3>André</h3></div><div class="role">Radiation oncologist</div><p>Funny, crazy and sweet.</p><p class="warn">Warning: cleaning maniac</p></div>
   </div>
   <h4>Follow along</h4><div class="socials big">${SOCIAL}</div>
   <h4>Support us</h4><p class="coffee-note" style="margin:0 0 10px">Like what we do? A coffee keeps the blog going.</p>${COFFEE}
   <h4>Have fun with us</h4>
   <div class="email"><code id="mail">geral.the2planners@gmail.com</code><button class="btn" id="copy">Copy email</button></div></div></div>
   <section class="block"><div class="shead"><h2>Together since <em>30.04.2016</em></h2></div>
-  <div class="mosaic">${pics.map(([id,c])=>`<figure><button type="button" data-full="${src(id)}" aria-label="Open photo${c?": "+c:""}"><img src="${src(id)}" alt="${esc(c||"Richie and Andrew")}" loading="lazy"></button>${c?`<figcaption>${esc(c)}</figcaption>`:""}</figure>`).join("")}</div></section></div>`;
+  <div class="mosaic">${pics.map(([id,c])=>`<figure><button type="button" data-full="${src(id)}" aria-label="Open photo${c?": "+c:""}"><img src="${src(id)}" alt="${esc(c||"Richie and André")}" loading="lazy"></button>${c?`<figcaption>${esc(c)}</figcaption>`:""}</figure>`).join("")}</div></section></div>`;
 }
 function fmtText(t){
   return esc(t).replace(/(\d{2,3}\s?º\s?C(?:\s?\|\s?\d{2,3}\s?º\s?F)?|\d{2,3} Celsius degrees(?: \| \d{2,3} Fahren\w+ degrees)?)/g,'<span class="temp">$1</span>');
@@ -412,7 +437,7 @@ function seriesNext(p){
   return `<div class="series-next">${a(prev,"Previous stop","prev")}${a(next,next&&!p.part?"Start with":"Next stop","next")}</div>`;
 }
 function postView(p){
-  const b=p.blocks;let html="",i=0;let ingrN=0;let sc=false;const R=p.kind==="recipes";const T=s=>R?withTimers(fmtText(s)):fmtText(s);
+  const b=p.blocks;let html="",i=0,stepN=0;let ingrN=0;let sc=false;const R=p.kind==="recipes";const T=s=>R?withTimers(fmtText(s)):fmtText(s);
   while(i<b.length){
     const [t,x]=b[i];
     html+=figs(p,i);
@@ -424,9 +449,11 @@ function postView(p){
       else html+=`<ul class="plain">${items.map(it=>`<li>${fmtText(it)}</li>`).join("")}</ul>`;
       continue;
     }
+    if(t==="video"){const [vid,cap]=x.split("|");html+=`<figure class="vid"><button type="button" class="vplay" data-vid="${esc(vid)}" aria-label="Play video${cap?": "+esc(cap):""}"><img src="https://i.ytimg.com/vi/${esc(vid)}/hqdefault.jpg" alt="" loading="lazy"><span class="pb" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span></button>${cap?`<figcaption>${esc(cap)}</figcaption>`:""}</figure>`;i++;continue;}
     if(t==="h3")html+=`<h3>${esc(x)}</h3>`;
     else if(t==="h4")html+=`<h4>${esc(x.replace(/\s*:\s*$/,""))}</h4>`;
     else if(t==="tip")html+=`<p class="tip">${T(x)}</p>`;
+    else if(p.kind==="recipes"&&/^\d+\s*\./.test(x))html+=`<p id="step-${++stepN}">${T(x)}</p>`;
     else html+=`<p>${T(x)}</p>`;
     i++;
   }
@@ -440,7 +467,7 @@ function postView(p){
     <div class="body"><div class="feature"><div class="stampbox"${coverStyle(p)}>${stampInner(p,true)}</div></div>${seriesNav(p)}${html}${figs(p,b.length)}
     ${seriesNext(p)}</div>${feedbackHTML(p)}</article>
   <aside class="side">
-    <div class="box"><img class="couple" src="${IMG.couple}" alt=""><p>Richie and Andrew, cooking, travelling and living together in Porto since 2016.</p><div class="socials">${SOCIAL}</div><div class="side-coffee">${COFFEE}</div></div>
+    <div class="box"><img class="couple" src="${IMG.couple}" alt=""><p>Richie and André, cooking, traveling and living together in Porto since 2016.</p><div class="socials">${SOCIAL}</div><div class="side-coffee">${COFFEE}</div></div>
     <div class="box"><h4>You might also like</h4><div class="mini">${more.map(q=>`<a href="${H(q.id)}">${q.photo?`<img src="${src(q.photo.cover)}" alt="" loading="lazy">`:`<i style="--tint:${tint(q)}">${esc(mono(q)).slice(0,3)}</i>`}<span>${esc(titleOf(q))}</span></a>`).join("")}</div></div>
   </aside></div></div>`;
 }
@@ -450,11 +477,11 @@ function notFound(){
   <div class="countries" style="margin-bottom:40px"><a class="chip" href="${H("recipes")}" style="text-decoration:none">Recipes</a><a class="chip" href="${H("travel")}" style="text-decoration:none">City guides</a><a class="chip" href="${H("living")}" style="text-decoration:none">Our daily life</a><a class="chip" href="${H("home")}" style="text-decoration:none">Home</a></div>
   <div class="grid">${latest("recipes",4).map(card).join("")}</div></div>`;
 }
-const SEC_DESC={home:"Recipes, city guides and daily life from Richie and Andrew, a couple from Porto. Portuguese classics, Christmas baking and trips around Europe.",
+const SEC_DESC={home:"Recipes, city guides and daily life from Richie and André, a couple from Porto. Portuguese classics, Christmas baking and trips around Europe.",
   recipes:"All our recipes: Portuguese classics from Maria Alice's notebook, Christmas baking and dishes we tasted abroad and rebuilt at home in Porto.",
-  travel:"Day by day city guides from our trips: Thailand, China, Barcelona, the Picos de Europa, Northern Italy, Prague, Vienna, Budapest and more.",
+  travel:"Day by day city guides from our trips: Thailand, China, Finland, Barcelona, the Picos de Europa, Northern Italy, Prague, Vienna, Budapest and more.",
   living:"Our home in Porto, Christmas at our place and honest reviews of the restaurants and hotels we love.",
-  about:"Meet Richie and Andrew, the couple from Porto behind The 2 Planners. Together, enjoying the world since 2016."};
+  about:"Meet Richie and André, the couple from Porto behind The 2 Planners. Together, enjoying the world since 2016."};
 function clip(s,n=158){s=s.replace(/\s+/g," ").trim();return s.length>n?s.slice(0,s.lastIndexOf(" ",n-1))+"...":s;}
 function postDesc(p){
   const intro=p.blocks.find(b=>b[0]==="p"&&b[1].length>60&&!/^\d+\s*\./.test(b[1]));
@@ -481,11 +508,11 @@ function setSEO(h){
   const org={"@type":"Organization","name":"The 2 Planners","url":ORIGIN+"/"};
   if(p&&p.kind==="recipes"){
     ld={"@context":"https://schema.org","@type":"Recipe","name":titleOf(p),"description":desc,"image":[img],"author":org,"publisher":org,"datePublished":isoDate(p),
-      "recipeCategory":(p.tags.find(t=>["desserts","main dishes","appetizers","breakfast","drinks","bread"].includes(t))||undefined),
+      "recipeCategory":(p.tags.find(t=>["desserts","main dishes","appetizers","breakfast","drinks","bread"].includes(t))||"main dishes"),
       "recipeCuisine":(p.tags.find(t=>["portuguese","italian","chinese","american","brazilian","mexican","french","british","vietnamese","swiss"].includes(t))||undefined),
-      "keywords":p.tags.filter(t=>!["recipes","cooking"].includes(t)).join(", "),
+      "keywords":(p.tags.filter(t=>!["recipes","cooking"].includes(t)).join(", ")||titleOf(p).toLowerCase()),
       "recipeIngredient":p.blocks.filter(b=>b[0]==="ul").map(b=>b[1]),
-      "recipeInstructions":p.blocks.filter(b=>b[0]==="ol"||(b[0]==="p"&&/^\d+\s*\./.test(b[1]))).map(b=>({"@type":"HowToStep","text":b[1].replace(/^\d+\s*\.\s*/,"")}))};
+      "recipeInstructions":p.blocks.filter(b=>b[0]==="ol"||(b[0]==="p"&&/^\d+\s*\./.test(b[1]))).map((b,i)=>({"@type":"HowToStep","text":b[1].replace(/^\d+\s*\.\s*/,""),"url":url+"#step-"+(i+1)}))};
   }else if(p){
     ld={"@context":"https://schema.org","@type":"BlogPosting","headline":titleOf(p),"description":desc,"image":[img],"author":org,"publisher":org,"datePublished":isoDate(p),"mainEntityOfPage":url};
   }else{
@@ -652,6 +679,11 @@ function openLightbox(start){
 }
 if(!PATHS)addEventListener("hashchange",route);route();
 /* Buy Me a Coffee: open the donation panel on the page when the widget is available, otherwise follow the link */
+document.addEventListener("click",e=>{
+  const v=e.target.closest(".vplay");if(!v)return;
+  const f=document.createElement("iframe");f.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(v.dataset.vid)+"?autoplay=1&rel=0";
+  f.title=v.getAttribute("aria-label");f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.allowFullscreen=true;f.loading="lazy";v.replaceWith(f);
+});
 document.addEventListener("click",e=>{
   const a=e.target.closest("a.coffee");if(!a)return;
   const w=document.getElementById("bmc-wbtn");

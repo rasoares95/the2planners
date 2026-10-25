@@ -17,12 +17,9 @@
   --shadow:0 1px 2px rgba(63,61,56,.06),0 6px 18px rgba(63,61,56,.07);
   --f-display:"Montserrat",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  color-scheme:light;
   --f-script:"Italianno","Brush Script MT",cursive;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#1E1D1A;--card:#282622;--stamp:#3A372E;--stamp-edge:#5A5442;--ink:#E9E4D6;--grey:#B5B1A7;--muted:#A8A293;--script:#CDB98A;--red:#E0625A;--teal:#5CC4BC;--line:#3A372F;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);color-scheme:dark}}
-:root[data-theme="dark"]{
-  --paper:#1E1D1A;--card:#282622;--stamp:#3A372E;--stamp-edge:#5A5442;--ink:#E9E4D6;--grey:#B5B1A7;--muted:#A8A293;--script:#CDB98A;--red:#E0625A;--teal:#5CC4BC;--line:#3A372F;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -150,7 +147,7 @@ section.block{padding-block:40px}
 .body ol.steps{list-style:none;counter-reset:s;padding:0;margin:0 0 1em;display:grid;gap:14px}
 .body ol.steps li{counter-increment:s;display:grid;grid-template-columns:36px 1fr;gap:12px}
 .body ol.steps li::before{content:counter(s);font-family:var(--f-display);font-weight:300;font-size:24px;line-height:1.2;color:var(--grey);font-variant-numeric:tabular-nums}
-.temp{white-space:nowrap;background:var(--stamp);padding:0 6px;border-radius:4px;font-family:var(--f-display);font-size:.82em;font-weight:500}
+.temp{display:inline-block;max-width:100%;white-space:normal;background:var(--stamp);padding:0 6px;border-radius:4px;font-family:var(--f-display);font-size:.82em;font-weight:500}
 .source{font-family:var(--f-display);font-size:12px;color:var(--muted);margin-top:30px;word-break:break-all}
 .source a{color:var(--muted)}
 aside.side{display:grid;gap:28px;align-content:start}
@@ -432,5 +429,26 @@ footer .script{font-family:var(--f-script);font-size:28px;color:var(--script);le
 .tmap .mreset{position:absolute;top:10px;right:10px;z-index:1;font:600 12px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:999px;cursor:pointer}
 .tmap .leg{vector-effect:non-scaling-stroke}
 .tmap .pin.nolabel text{display:none}
+.body .vid{margin:0 0 1.4em}
+.body .vplay{position:relative;display:block;width:100%;aspect-ratio:16/9;padding:0;border:0;border-radius:12px;overflow:hidden;background:#000;cursor:pointer}
+.body .vplay img{width:100%;height:100%;object-fit:cover;display:block;opacity:.9;transition:opacity .2s}
+.body .vplay:hover img{opacity:1}
+.body .vplay .pb{position:absolute;inset:0;margin:auto;width:64px;height:64px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.body .vid iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;display:block}
+.body .vid figcaption{font-family:var(--f-display);font-size:13px;color:var(--muted);margin-top:6px}
+.mchips{display:flex;flex-wrap:wrap;gap:6px}
+.mchips .chip{font-size:11px;padding:6px 11px}
+.tmap svg.ov .pin:not(.home),.tmap svg:not(.ov) .cpin,.tmap svg.ov .trip,.tmap svg:not(.ov) .ovlegs{display:none}
+.tmap .cpin{cursor:pointer}
+.tmap .cpin circle.hit{fill:transparent}
+.tmap .cpin circle.dot{fill:var(--red);stroke:var(--card);stroke-width:2;transition:r .2s ease}
+.tmap .cpin circle.ring{fill:none;stroke:var(--red);stroke-width:1.5;opacity:0;transform-box:fill-box;transform-origin:center}
+.tmap .cpin:hover circle.ring,.tmap .cpin:focus-visible circle.ring{animation:ring 1.6s ease-out infinite}
+.tmap .cpin:hover circle.dot{r:8}
+.tmap .cpin text{font-family:var(--f-display);font-size:13.5px;font-weight:600;fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round;pointer-events:none}
+.tmap .cpin.nolabel text{display:none}
+.tmap .cpin text{display:none}
+.tmap .cpin:hover text,.tmap .cpin:focus-visible text{display:block}
+.tmap .cpin:focus{outline:none}.tmap .cpin:focus-visible circle.dot{stroke:var(--ink)}
 @media (max-width:600px){.tmap .legend{display:none}.tmap .mreset{font-size:10px;padding:6px 10px;top:6px;right:6px}}
 .tmap .pin.on text,.tmap .pin:hover text,.tmap .pin:focus-visible text{display:inline}
