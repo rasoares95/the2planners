@@ -452,3 +452,4 @@ footer .script{font-family:var(--f-script);font-size:28px;color:var(--script);le
 .tmap .cpin:focus{outline:none}.tmap .cpin:focus-visible circle.dot{stroke:var(--ink)}
 @media (max-width:600px){.tmap .legend{display:none}.tmap .mreset{font-size:10px;padding:6px 10px;top:6px;right:6px}}
 .tmap .pin.on text,.tmap .pin:hover text,.tmap .pin:focus-visible text{display:inline}
+.schedtag{display:inline-block;margin-left:.5em;padding:.1em .55em;border-radius:99px;background:#F6D365;color:#3a2f12;font-size:.75em;letter-spacing:.04em;text-transform:uppercase;vertical-align:middle}

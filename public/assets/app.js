@@ -26,6 +26,11 @@ for(const [key,name] of Object.entries(SECTIONS)){
     ALL.push(p);
   }
 }
+// Scheduled posts: a post dated in the future stays hidden on the live site until that day (Lisbon time); the preview shows it with a badge
+const TODAY=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Lisbon"}).format(new Date());
+const ymd=ts=>{const t=new Date(ts);return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");};
+const LIVE_HIDE=PATHS&&!window.SHOW_SCHED;
+for(let i=ALL.length-1;i>=0;i--){const p=ALL[i];if(p.ts&&ymd(p.ts)>TODAY){if(LIVE_HIDE)ALL.splice(i,1);else p.sched=true;}}
 const byId=Object.fromEntries(ALL.map(p=>[p.id,p]));
 const SEC_PATH={home:"/",recipes:"/recipes/",travel:"/travel/",living:"/our-daily-life/",about:"/about/"};
 const byPath=Object.fromEntries(Object.entries(SEC_PATH).map(([k,v])=>[v,k]).concat(ALL.map(p=>[p.path,p.id])));
@@ -179,6 +184,8 @@ const COUNTRY_OF={"Porto":"Portugal","Vigo":"Spain","Barcelona":"Spain","Picos d
 const OFFSHORE=new Set(["Madeira"]);
 const groupOf=c=>COUNTRY_OF[c];
 const TRIPS=[{id:"italy",name:"8 days in Northern Italy",air:true,stops:["Milan","Cinque Terre","Pisa","Florence","Verona","Venice"]},{id:"xmas",name:"8 days of Christmas markets",air:true,stops:["Budapest","Prague","Vienna"]},{id:"vigo",name:"weekend road trip",air:false,stops:["Vigo"]},{id:"bcn",name:"Barcelona and Montserrat trip",air:true,stops:["Barcelona"]},{id:"picos",name:"Picos de Europa road trip",air:false,via:["Pontevedra","Santiago","Coruna","Oviedo","Gijon","Cangas","Arenas","Potes","FuenteDe"],stops:["Picos de Europa"]},{id:"china",name:"15 days in China",air:true,stops:["Beijing","Xi'an","Chengdu","Guilin","Yangshuo","Hangzhou","Shanghai"]},{id:"thai",name:"Thailand honeymoon",air:true,stops:["Bangkok","Chiang Mai","Phuket","Phi Phi","Railay","Khao Sok","Koh Samui"]},{id:"fin",name:"Finland trip",air:true,stops:["Helsinki","Rovaniemi"]},{id:"tur",name:"organized tour of Turkey",air:true,stops:["Istanbul","Ankara","Cappadocia","Konya","Pamukkale","Ephesus","Izmir"]},{id:"bnl",name:"winter trip to Belgium and Amsterdam",air:true,stops:["Brussels","Ghent","Antwerp","Amsterdam"]},{id:"muc",name:"Munich trip",air:true,stops:["Munich"]},{id:"ber",name:"Berlin trip",air:true,stops:["Berlin"]},{id:"fra",name:"Frankfurt trip",air:true,stops:["Frankfurt","Heidelberg"]},{id:"mad",name:"long weekend in Madrid",air:true,stops:["Madrid"]},{id:"sin",name:"Sintra trip",air:false,stops:["Sintra"]},{id:"mde",name:"Madeira road trip",air:true,stops:["Madeira"]},{id:"ham",name:"Christmas markets trip",air:true,stops:["Hamburg"]}];
+if(LIVE_HIDE){const later=TRIPS.filter(tr=>tr.from&&tr.from>TODAY),keep=new Set(TRIPS.filter(tr=>!later.includes(tr)).flatMap(tr=>tr.stops));
+  later.forEach(tr=>{tr.stops.forEach(c=>{if(!keep.has(c))delete MAP.pts[c];});TRIPS.splice(TRIPS.indexOf(tr),1);});}
 const tripOf=c=>TRIPS.find(tr=>tr.stops.includes(c));
 const TRIPLINE={picos:"Porto → Pontevedra → Santiago → A Coruña → Oviedo → Gijón → Cangas de Onís → Arenas de Cabrales → Potes → Fuente Dé"};
 function plane(a,c,b){const t=.5,x=(1-t)*(1-t)*a[0]+2*(1-t)*t*c[0]+t*t*b[0],y=(1-t)*(1-t)*a[1]+2*(1-t)*t*c[1]+t*t*b[1];const dx=2*(1-t)*(c[0]-a[0])+2*t*(b[0]-c[0]),dy=2*(1-t)*(c[1]-a[1])+2*t*(b[1]-c[1]);const ang=Math.atan2(dy,dx)*180/Math.PI;
@@ -461,7 +468,7 @@ function postView(p){
   const more=ALL.filter(q=>q.kind===p.kind&&q!==p).sort((a,c)=>{const s=x=>x.tags.filter(t=>p.tags.includes(t)).length;return s(c)-s(a)||c.ts-a.ts;}).slice(0,4);
   const tags=p.tags.filter(t=>!["recipes","cooking","travel","traveling"].includes(t));
   return `<div class="wrap"><a class="back" href="${back[0]}">← ${back[1]}</a>
-  <div class="post"><article><div class="dateline">${esc(p.date||"")}</div><h1>${esc(titleOf(p))}</h1>${subline(p)?`<div class="dateline" style="margin-top:4px">${p.kind==="eat-out"?subline(p):esc(subline(p))}</div>`:""}
+  <div class="post"><article><div class="dateline">${esc(p.date||"")}${p.sched?` <span class="schedtag">Scheduled</span>`:""}</div><h1>${esc(titleOf(p))}</h1>${subline(p)?`<div class="dateline" style="margin-top:4px">${p.kind==="eat-out"?subline(p):esc(subline(p))}</div>`:""}
     <div class="tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
     ${p.kind==="recipes"?`<a class="avg" id="avgRating" href="#rate" hidden></a>`:""}
     <div class="body"><div class="feature"><div class="stampbox"${coverStyle(p)}>${stampInner(p,true)}</div></div>${seriesNav(p)}${html}${figs(p,b.length)}
